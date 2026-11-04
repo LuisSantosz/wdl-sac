@@ -1,70 +1,31 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>WDL SAC | Central de solicitações</title><link rel="icon" href="favicon.png" type="image/png"><link rel="stylesheet" href="style.css"><script type="module" src="app.mjs"></script></head><body>
-<header class="top"><div class="shell bar"><div class="brand"><img src="wdl-sac.png" width="420" height="83" alt="WDL SAC"></div><div class="toolbar"><div class="clock"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg><time id="clock" aria-label="Horário de São Paulo"></time></div><!-- From Uiverse.io by RiccardoRapelli -->
-<label class="sky-switch" title="Tema preto">
-  <input id="theme" type="checkbox" role="switch" aria-label="Tema preto" />
-  <span class="sky-slider sky-round" aria-hidden="true">
-    <span class="sky-sun-moon">
-      <svg id="sky-moon-dot-1" class="sky-moon-dot" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-moon-dot-2" class="sky-moon-dot" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-moon-dot-3" class="sky-moon-dot" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-light-ray-1" class="light-ray" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-light-ray-2" class="light-ray" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-light-ray-3" class="light-ray" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-
-      <svg id="sky-cloud-1" class="sky-cloud-dark" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-cloud-2" class="sky-cloud-dark" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-cloud-3" class="sky-cloud-dark" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-cloud-4" class="sky-cloud-light" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-cloud-5" class="sky-cloud-light" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-      <svg id="sky-cloud-6" class="sky-cloud-light" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="50"></circle>
-      </svg>
-    </span>
-    <span class="sky-stars">
-      <svg id="sky-star-1" class="sky-star" viewBox="0 0 20 20">
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>WDL SAC | Central de solicitações</title><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css"><script type="module" src="app.mjs"></script></head><body>
+<header class="top"><div class="shell bar"><div class="brand"><img src="wdl-sac.svg" width="244" height="64" alt="WDL SAC"></div><div class="toolbar"><div class="clock"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg><time id="clock" aria-label="Horário de São Paulo"></time></div><!-- Adaptado de Creatlydev (Uiverse) -->
+<label class="theme-toggle">
+  <input type="checkbox" id="theme" role="switch" aria-label="Tema escuro">
+  <span class="theme-icon theme-moon"><svg aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        width="20"
+        height="20"
+      >
         <path
-          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+          fill-rule="evenodd"
+          d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"
+          clip-rule="evenodd"
         ></path>
-      </svg>
-      <svg id="sky-star-2" class="sky-star" viewBox="0 0 20 20">
+      </svg></span>
+  <span class="theme-icon theme-sun"><svg aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        width="20"
+        height="20"
+      >
         <path
-          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+          d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"
         ></path>
-      </svg>
-      <svg id="sky-star-3" class="sky-star" viewBox="0 0 20 20">
-        <path
-          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
-        ></path>
-      </svg>
-      <svg id="sky-star-4" class="sky-star" viewBox="0 0 20 20">
-        <path
-          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
-        ></path>
-      </svg>
-    </span>
-  </span>
+      </svg></span>
 </label><button id="logout" class="secondary" type="button" hidden>Sair</button></div></div></header>
 <main class="shell dashboard"><section class="hero">
   <div><p class="hero-kicker">Central de pós-venda</p><h1>Solicitações SAC</h1><p>Organize ocorrências, acompanhe reenvios e registre cada etapa do atendimento.</p></div>
@@ -103,7 +64,7 @@
   </form>
 </dialog><dialog id="login-dialog" aria-labelledby="login-title">
   <form id="login-form">
-    <header class="dialog-head login-brand"><img src="wdl-sac.png" width="128" alt="WDL SAC"><h2 id="login-title">Entrar no WDL SAC</h2></header>
+    <header class="dialog-head login-brand"><img src="wdl-sac.svg" width="128" alt="WDL SAC"><h2 id="login-title">Entrar no WDL SAC</h2></header>
     <div class="form-body"><div class="grid"><label>E-mail<input name="email" type="email" autocomplete="username" required></label><label>Senha<input name="password" type="password" autocomplete="current-password" required></label></div><p id="login-error" role="alert"></p></div>
     <footer class="dialog-foot"><button id="login-submit" class="primary">Entrar</button></footer>
   </form>
