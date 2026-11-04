@@ -76,6 +76,17 @@
 <section><h3>Itens e ocorrência</h3><label class="check"><input id="whole" name="inteira" type="checkbox" checked> A ocorrência envolve a NF inteira</label><div id="items"></div><button id="add" type="button" class="secondary">＋ Adicionar item</button>
 <div class="grid occurrence"><label>Qual o problema?<select name="problema" required><option value="">Selecione o motivo</option><option>Problema elétrico</option><option>Pedido incompleto</option><option>Veio algo que não pedi</option><option>Produto quebrado</option><option>Não recebi a mercadoria</option></select></label></div><label>Descrição da ocorrência<textarea name="descricao" rows="2" placeholder="Descreva o que o cliente informou"></textarea></label></section>
 <section id="tracking" hidden><h3>Acompanhamento</h3><div class="grid"><label>Status<select name="status"><option value="nova">Nova</option><option value="andamento">Em andamento</option><option value="concluida">Concluída</option></select></label><label>Nº da nova NF<input name="novaNF"></label><label>Código de rastreio<input name="rastreio"></label><label>Transportadora<input name="transportadora"></label><label>Data de entrega<input name="entrega" type="date"></label></div><div class="copy-row"><button id="copy" type="button" class="secondary action-button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 5V4H6a2 2 0 0 0-2 2v10h1"/></svg>Copiar dados da entrega</button><span id="copy-status" role="status"></span></div><label>Registrar atualização<textarea name="nota" rows="2" placeholder="Ex.: reenvio despachado"></textarea></label><ul id="history"></ul></section>
+<section id="staff-portal" hidden>
+<h3>Acompanhamento do cliente</h3>
+<p>Compartilhe o link apenas com o cliente. As mensagens desta seção aparecem no link.</p>
+<div class="portal-actions"><button id="portal-create" type="button" class="secondary">Gerar link</button><button id="portal-revoke" type="button" class="secondary" hidden>Revogar link</button><button id="portal-refresh" type="button" class="secondary">Atualizar conversa</button></div>
+<label id="portal-link-label" hidden>Link do cliente<input id="portal-link" type="url" readonly></label>
+<button id="portal-copy" type="button" class="secondary" hidden>Copiar link</button>
+<ol class="portal-messages" id="portal-messages"></ol>
+<label>Resposta visível ao cliente<textarea id="portal-reply" rows="3" maxlength="2000"></textarea></label>
+<button id="portal-send" type="button" class="primary">Enviar resposta</button>
+<p id="portal-status" role="status"></p>
+</section>
 <p id="error" role="alert"></p></div><footer class="dialog-foot"><!-- From Uiverse.io by andrew-demchenk0 -->
 <button id="delete" class="delete-button" type="button" hidden>
   <span class="button__text">Excluir solicitação</span>

@@ -1,3 +1,4 @@
+import {showMessages} from './portal-messages.mjs';
 import {cloudConfig} from './cloud-config.mjs';
 const useCloud = true;
 import {readInvoice} from './invoice.mjs';
@@ -87,6 +88,7 @@ function open(record) {
   setPdfInfo(attachment?.name ?? record?.pdfName ?? '');
   editor.showModal();
   $('.form-body').scrollTop = 0;
+  openPortal(record);
 }
 function syncBusy() {
   for (const selector of ['#save','#delete','#copy']) $(selector).disabled = saving || reading;
@@ -343,3 +345,75 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock,1000);
+
+const portalSection = $('#staff-portal');
+const portalLink = $('#portal-link');
+const portalReply = $('#portal-reply');
+const portalStatus = $('#portal-status');
+const portalControls = [...portalSection.querySelectorAll('button')];
+let portalView = 0;
+
+function showPortal(data) {
+  const active = Boolean(data.link?.ativo);
+  portalLink.value = active ? new URL('acompanhar.html#'+data.link.token,location.href).href : '';
+  for (const id of ['portal-link-label','portal-copy','portal-revoke']) $('#'+id).hidden = !active;
+  $('#portal-create').hidden = active;
+  showMessages($('#portal-messages'),data.mensagens);
+}
+
+function openPortal(record) {
+  portalView++;
+  portalSection.hidden = !record;
+  portalReply.value = '';
+  portalStatus.textContent = '';
+  showPortal({mensagens:[]});
+  if (record) runPortal();
+}
+
+async function runPortal(action, message = '') {
+  const id = current?.id;
+  if (!id) return;
+  const view = portalView;
+  const isCurrent = () => view === portalView && editor.open;
+  portalControls.forEach(button => {button.disabled = true;});
+  portalReply.disabled = true;
+  portalStatus.textContent = 'Carregando…';
+  try {
+    if (action) await action(id);
+    if (isCurrent() && message === 'Resposta enviada.') portalReply.value = '';
+    const data = await cloud.portal(id);
+    if (isCurrent()) {
+      showPortal(data);
+      portalStatus.textContent = message;
+    }
+  } catch {
+    if (isCurrent()) portalStatus.textContent = 'Não foi possível concluir. Atualize a conversa antes de tentar novamente.';
+  } finally {
+    if (isCurrent()) {
+      portalControls.forEach(button => {button.disabled = false;});
+      portalReply.disabled = false;
+    }
+  }
+}
+
+$('#portal-create').onclick = () => runPortal(id => cloud.createPortal(id),'Link gerado.');
+$('#portal-revoke').onclick = () => runPortal(id => cloud.revokePortal(id),'Link revogado.');
+$('#portal-refresh').onclick = () => runPortal();
+$('#portal-copy').onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(portalLink.value);
+    portalStatus.textContent = 'Link copiado.';
+  } catch {
+    portalLink.select();
+    portalStatus.textContent = 'Copie o endereço selecionado.';
+  }
+};
+$('#portal-send').onclick = () => {
+  const message = portalReply.value.trim();
+  if (!message) {
+    portalStatus.textContent = 'Digite uma resposta.';
+    portalReply.focus();
+    return;
+  }
+  runPortal(id => cloud.reply(id,message),'Resposta enviada.');
+};

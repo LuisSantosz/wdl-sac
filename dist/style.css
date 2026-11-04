@@ -380,3 +380,15 @@ dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface)
 .upload .invoice-file{min-height:40px;padding:6px 10px;background:var(--surface);color:var(--muted);border:1px solid var(--line);border-radius:6px}
 .invoice-file::file-selector-button{border:0;background:transparent;color:var(--text);font:inherit;font-weight:650;padding:5px 8px 5px 0;margin-inline-end:8px;cursor:pointer}
 .invoice-file:hover::file-selector-button{color:var(--blue)}
+
+.customer-portal{max-width:680px;padding-block:28px}
+.customer-portal header{margin-bottom:14px}
+.customer-portal h1{font-size:clamp(24px,5vw,36px)}
+.customer-portal .board>p{margin-bottom:8px}
+.portal-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.portal-messages{list-style:none;padding:0;display:grid;gap:8px;max-height:360px;overflow:auto}
+.portal-messages li{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.portal-messages time{margin-inline-start:8px;color:var(--muted);font-size:12px}
+.portal-messages p{margin-top:5px;white-space:pre-wrap;overflow-wrap:anywhere}
+#portal-copy,#portal-send,#customer-form button{margin-top:8px}
+#portal-status,#customer-feedback{color:var(--muted);margin-block:8px}

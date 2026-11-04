@@ -43,6 +43,22 @@ export function connect(config) {
         if (rows.length < pageSize) return records;
       }
     },
+    async portal(id) {
+      const [link,messages] = await Promise.all([
+        client.from('sac_links').select('token,ativo').eq('solicitacao_id',id).maybeSingle(),
+        client.from('sac_mensagens').select('autor,mensagem,criada_em').eq('solicitacao_id',id).order('id',{ascending:false}).limit(100)
+      ]);
+      return {link:result(link),mensagens:result(messages).reverse()};
+    },
+    async createPortal(id) {
+      result(await client.from('sac_links').upsert({solicitacao_id:id,token:crypto.randomUUID(),ativo:true}));
+    },
+    async revokePortal(id) {
+      result(await client.from('sac_links').update({ativo:false}).eq('solicitacao_id',id));
+    },
+    async reply(id,mensagem) {
+      result(await client.from('sac_mensagens').insert({solicitacao_id:id,autor:'equipe',mensagem}));
+    },
     download:async record => result(await bucket.download(record.pdfPath)),
     async save(record,current) {
       const {id,pdf,...data} = record;
