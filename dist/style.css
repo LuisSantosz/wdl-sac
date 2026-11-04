@@ -371,9 +371,10 @@ dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface)
 @media(max-width:520px){.brand img{width:95px}}
 
 /* Busca adaptada do componente de satyamchaudharydev (Uiverse). */
-.search{position:relative;width:min(100%,330px);min-width:0;min-height:40px;padding:0 8px;border-radius:30px;transition:border-radius .25s ease}
-.search::after{content:"";position:absolute;inset:auto 0 0;height:2px;background:var(--blue);transform:scaleX(0);transition:transform .25s ease;pointer-events:none}
-.search:focus-within{border-radius:6px}
+.search{position:relative;width:min(100%,330px);min-width:0;min-height:40px;padding:0 8px;border-radius:30px;transition:border-radius .25s ease,border-color .25s ease}
+.search::after{content:"";position:absolute;inset:auto 6px 0;height:2px;border-radius:2px;background:var(--blue);transform:scaleX(0);transition:transform .25s ease;pointer-events:none}
+.search:focus-within{border-radius:8px;border-color:var(--blue)}
+.search input:focus-visible{outline:none}
 .search:focus-within::after{transform:scaleX(1)}
 .search input{flex:1;min-width:0;padding-inline:4px}
 .search input::-webkit-search-cancel-button{appearance:none}
