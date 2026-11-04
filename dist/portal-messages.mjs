@@ -9,7 +9,7 @@ export function showMessages(list,messages) {
   for (const message of messages) {
     const item = document.createElement('li');
     const title = document.createElement('strong');
-    title.textContent = message.autor === 'equipe' ? 'Equipe SAC' : 'Cliente';
+    title.textContent = message.autor === 'equipe' ? 'WDL SAC' : 'Cliente';
     const time = document.createElement('time');
     time.dateTime = message.criada_em;
     time.textContent = new Date(message.criada_em).toLocaleString('pt-BR');
