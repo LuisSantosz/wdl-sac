@@ -309,6 +309,13 @@ dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface)
 .hero p{font-size:13px}
 .metrics{gap:8px;margin-bottom:14px}
 .metric{padding:10px 12px}
+.metric{
+  --metric-color:var(--accent,var(--blue));
+  background:color-mix(in srgb,var(--metric-color) 22%,var(--surface));
+  border-color:color-mix(in srgb,var(--metric-color) 45%,var(--surface));
+}
+.metric span{color:var(--text)}
+.metric .dot{display:none}
 .metric strong{font-size:23px}
 .board{padding:12px}
 .board-top{margin-bottom:10px}
