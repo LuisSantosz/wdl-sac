@@ -359,3 +359,24 @@ dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface)
 .bar .toolbar{grid-column:3;justify-self:end}
 @media(max-width:380px){.bar{padding:7px 0;row-gap:5px}.bar .toolbar{grid-column:1/-1;justify-self:center}}
 @media(max-width:560px){.bar:has(#logout:not([hidden])){padding:7px 0;row-gap:5px}.bar:has(#logout:not([hidden])) .toolbar{grid-column:1/-1;justify-self:center}}
+
+.brand img{display:block;width:150px;height:auto}
+:root[data-theme=dark] .brand{background:#fff;border-radius:6px;padding:3px 6px}
+@media(max-width:520px){.brand img{width:95px}}
+
+/* Busca adaptada do componente de satyamchaudharydev (Uiverse). */
+.search{position:relative;width:min(100%,330px);min-width:0;min-height:40px;padding:0 8px;border-radius:30px;transition:border-radius .25s ease}
+.search::after{content:"";position:absolute;inset:auto 0 0;height:2px;background:var(--blue);transform:scaleX(0);transition:transform .25s ease;pointer-events:none}
+.search:focus-within{border-radius:6px}
+.search:focus-within::after{transform:scaleX(1)}
+.search input{flex:1;min-width:0;padding-inline:4px}
+.search input::-webkit-search-cancel-button{appearance:none}
+.search button{display:grid;place-items:center;flex:none;width:28px;height:28px;padding:0;border:0;background:transparent;color:var(--muted);border-radius:50%}
+.search input:placeholder-shown ~ .search-clear{visibility:hidden}
+@media(max-width:580px){.search{width:100%}}
+@media(prefers-reduced-motion:reduce){.search,.search::after{transition:none}}
+
+/* Seletor de arquivos adaptado do componente de Yaya12085 (Uiverse). */
+.upload .invoice-file{min-height:40px;padding:6px 10px;background:var(--surface);color:var(--muted);border:1px solid var(--line);border-radius:6px}
+.invoice-file::file-selector-button{border:0;background:transparent;color:var(--text);font:inherit;font-weight:650;padding:5px 8px 5px 0;margin-inline-end:8px;cursor:pointer}
+.invoice-file:hover::file-selector-button{color:var(--blue)}

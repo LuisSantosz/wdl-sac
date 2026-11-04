@@ -157,7 +157,18 @@ $('#copy').onclick = async () => {
 };
 
 $('#new').onclick = () => open();
-$('#search').oninput = render;
+const search = $('#search');
+search.oninput = render;
+search.form.onsubmit = event => {
+  event.preventDefault();
+  render();
+};
+search.form.onreset = event => {
+  event.preventDefault();
+  search.value = '';
+  render();
+  search.focus();
+};
 for (const button of form.querySelectorAll('.close')) button.onclick = () => { if (!saving) editor.close(); };
 editor.addEventListener('cancel',event => { if (saving) event.preventDefault(); });
 editor.addEventListener('close',() => { uploadRun++; reading = false; syncBusy(); });

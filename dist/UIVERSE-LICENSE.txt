@@ -2,6 +2,8 @@ MIT License
 
 Copyright (c) 2026 RiccardoRapelli (Riccardo Rapelli)
 Copyright (c) 2026 andrew-demchenk0 (A)
+Copyright (c) 2026 satyamchaudharydev (satyam)
+Copyright (c) 2026 Yaya12085
 Animated button by gharsh11032000 (Uiverse.io)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
