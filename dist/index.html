@@ -1,0 +1,96 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>WDL SAC | Central de solicitações</title><link rel="stylesheet" href="style.css"><script type="module" src="app.mjs"></script></head><body>
+<header class="top"><div class="shell bar"><div class="brand">WDL <b>SAC</b></div><div class="toolbar"><div class="clock"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg><time id="clock" aria-label="Horário de São Paulo"></time></div><!-- From Uiverse.io by RiccardoRapelli -->
+<label class="sky-switch" title="Tema preto">
+  <input id="theme" type="checkbox" role="switch" aria-label="Tema preto" />
+  <span class="sky-slider sky-round" aria-hidden="true">
+    <span class="sky-sun-moon">
+      <svg id="sky-moon-dot-1" class="sky-moon-dot" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-moon-dot-2" class="sky-moon-dot" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-moon-dot-3" class="sky-moon-dot" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-light-ray-1" class="light-ray" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-light-ray-2" class="light-ray" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-light-ray-3" class="light-ray" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+
+      <svg id="sky-cloud-1" class="sky-cloud-dark" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-cloud-2" class="sky-cloud-dark" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-cloud-3" class="sky-cloud-dark" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-cloud-4" class="sky-cloud-light" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-cloud-5" class="sky-cloud-light" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+      <svg id="sky-cloud-6" class="sky-cloud-light" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50"></circle>
+      </svg>
+    </span>
+    <span class="sky-stars">
+      <svg id="sky-star-1" class="sky-star" viewBox="0 0 20 20">
+        <path
+          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+        ></path>
+      </svg>
+      <svg id="sky-star-2" class="sky-star" viewBox="0 0 20 20">
+        <path
+          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+        ></path>
+      </svg>
+      <svg id="sky-star-3" class="sky-star" viewBox="0 0 20 20">
+        <path
+          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+        ></path>
+      </svg>
+      <svg id="sky-star-4" class="sky-star" viewBox="0 0 20 20">
+        <path
+          d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z"
+        ></path>
+      </svg>
+    </span>
+  </span>
+</label><button id="logout" class="secondary" type="button" hidden>Sair</button></div></div></header>
+<main class="shell"><section class="hero"><div><h1>Solicitações SAC</h1><p>Organize ocorrências, acompanhe reenvios e registre cada etapa do atendimento.</p></div><button class="animated-button" id="new"><span>＋ Nova solicitação</span><span aria-hidden="true"></span></button></section>
+<section class="metrics" id="metrics" aria-label="Resumo das solicitações"></section>
+<section class="board" aria-labelledby="board-title"><div class="board-top"><div><h2>Painel de solicitações</h2><p>Selecione um cartão para consultar ou atualizar o atendimento.</p></div><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" aria-label="Buscar solicitações" placeholder="Buscar cliente, vendedor ou NF"></label></div><div class="columns" id="columns"></div></section><p class="foot">WDL SAC <span>•</span> Dados compartilhados do SAC</p>
+</main>
+<dialog id="editor"><form id="form"><header class="dialog-head"><div><div class="eyebrow">ATENDIMENTO SAC</div><h2 id="form-title">Nova solicitação</h2></div><button type="button" class="secondary close" aria-label="Fechar">×</button></header>
+<div class="form-body"><section><h3>Nota fiscal</h3><label class="upload"><strong>Anexar PDF da NF</strong><span>PDF com texto ou imagem. Confira os campos preenchidos antes de salvar.</span><input id="pdf" type="file" accept=".pdf,application/pdf"></label><p id="pdf-info" role="status"></p><button id="open-pdf" type="button" class="secondary" hidden>Baixar PDF anexado</button>
+<div class="grid"><label>Nome do cliente<input name="cliente" required></label><label>Nome do vendedor<input name="vendedor" required></label><label>Nº da NF<input name="nf" required inputmode="numeric"></label><label>Nº do pedido<input name="pedido"></label><label>Data de faturamento<input name="data" type="date"></label><label>Endereço<input name="endereco"></label></div></section>
+<section><h3>Itens e ocorrência</h3><label class="check"><input id="whole" name="inteira" type="checkbox" checked> A ocorrência envolve a NF inteira</label><div id="items"></div><button id="add" type="button" class="secondary">＋ Adicionar item</button>
+<div class="grid occurrence"><label>Qual o problema?<select name="problema" required><option value="">Selecione o motivo</option><option>Problema elétrico</option><option>Pedido incompleto</option><option>Veio algo que não pedi</option><option>Produto quebrado</option><option>Não recebi a mercadoria</option></select></label></div><label>Descrição da ocorrência<textarea name="descricao" rows="2" placeholder="Descreva o que o cliente informou"></textarea></label></section>
+<section id="tracking" hidden><h3>Acompanhamento</h3><div class="grid"><label>Status<select name="status"><option value="nova">Nova</option><option value="andamento">Em andamento</option><option value="concluida">Concluída</option></select></label><label>Nº da nova NF<input name="novaNF"></label><label>Código de rastreio<input name="rastreio"></label><label>Transportadora<input name="transportadora"></label><label>Data de entrega<input name="entrega" type="date"></label></div><div class="copy-row"><button id="copy" type="button" class="secondary action-button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 5V4H6a2 2 0 0 0-2 2v10h1"/></svg>Copiar dados da entrega</button><span id="copy-status" role="status"></span></div><label>Registrar atualização<textarea name="nota" rows="2" placeholder="Ex.: reenvio despachado"></textarea></label><ul id="history"></ul></section>
+<p id="error" role="alert"></p></div><footer class="dialog-foot"><!-- From Uiverse.io by andrew-demchenk0 -->
+<button id="delete" class="delete-button" type="button" hidden>
+  <span class="button__text">Excluir solicitação</span>
+  <span class="button__icon"><svg aria-hidden="true" height="18" viewBox="0 0 512 512" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M112,112l20,320c.95,18.49,14.4,32,32,32H348c17.67,0,30.87-13.51,32-32l20-320" style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"></path><line style="stroke:#fff;stroke-linecap:round;stroke-miterlimit:10;stroke-width:32px" x1="80" x2="432" y1="112" y2="112"></line><path d="M192,112V72h0a23.93,23.93,0,0,1,24-24h80a23.93,23.93,0,0,1,24,24h0v40" style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"></path><line style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px" x1="256" x2="256" y1="176" y2="400"></line><line style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px" x1="184" x2="192" y1="176" y2="400"></line><line style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px" x1="328" x2="320" y1="176" y2="400"></line></svg></span>
+</button><button type="button" class="secondary close">Cancelar</button><button id="save" class="primary">Salvar solicitação</button></footer></form></dialog>
+<dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description">
+  <form method="dialog">
+    <header class="dialog-head"><h2 id="delete-title">Excluir solicitação?</h2></header>
+    <div class="form-body"><p id="delete-description"></p><p id="delete-error" role="alert"></p></div>
+    <footer class="dialog-foot"><button id="keep" class="secondary" autofocus>Manter solicitação</button><button id="confirm-delete" type="button" class="danger-solid">Excluir definitivamente</button></footer>
+  </form>
+</dialog><dialog id="login-dialog" aria-labelledby="login-title">
+  <form id="login-form">
+    <header class="dialog-head"><h2 id="login-title">Entrar no WDL SAC</h2></header>
+    <div class="form-body"><div class="grid"><label>E-mail<input name="email" type="email" autocomplete="username" required></label><label>Senha<input name="password" type="password" autocomplete="current-password" required></label></div><p id="login-error" role="alert"></p></div>
+    <footer class="dialog-foot"><button id="login-submit" class="primary">Entrar</button></footer>
+  </form>
+</dialog></body></html>

@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.*
+dist/pdf*.min.mjs
+dist/ocr/*.wasm*
+dist/ocr/tesseract.mjs
+dist/ocr/worker.min.js
+dist/ocr/lang/*.gz

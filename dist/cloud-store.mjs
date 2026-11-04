@@ -1,0 +1,75 @@
+import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm';
+
+function result({data,error}) {
+  if (error) throw error;
+  return data;
+}
+
+export function connect(config) {
+  const client = createClient(config.url,config.publishableKey);
+  const table = () => client.from('solicitacoes');
+  const bucket = client.storage.from('sac-pdfs');
+
+  async function removeFile(path) {
+    if (!path) return;
+    const {error} = await bucket.remove([path]);
+    if (error) console.warn('Falha ao limpar o anexo do SAC.',error.message);
+  }
+
+  return {
+    observe(callback) {
+      let previousUser;
+      client.auth.onAuthStateChange((_event,session) => {
+        const user = session?.user ?? null;
+        const id = user?.id ?? null;
+        if (id === previousUser) return;
+        previousUser = id;
+        setTimeout(() => callback(user),0);
+      });
+    },
+    login:async (email,password) => result(await client.auth.signInWithPassword({email,password})),
+    logout:async () => result(await client.auth.signOut({scope:'local'})),
+    async list() {
+      const {data:{user},error} = await client.auth.getUser();
+      if (error) throw error;
+      if (!user || !result(await client.from('equipe_sac').select('user_id').eq('user_id',user.id).maybeSingle())) {
+        throw new Error('Conta sem acesso ao SAC.');
+      }
+      const records = [];
+      const pageSize = 200;
+      for (let offset = 0; ; offset += pageSize) {
+        const rows = result(await table().select('id,revision,data').order('id').range(offset,offset+pageSize-1));
+        records.push(...rows.map(row => ({...row.data,id:row.id,revision:row.revision})));
+        if (rows.length < pageSize) return records;
+      }
+    },
+    download:async record => result(await bucket.download(record.pdfPath)),
+    async save(record,current) {
+      const {id,pdf,...data} = record;
+      const revision = crypto.randomUUID();
+      const path = pdf ? id+'/'+revision+'.pdf' : null;
+      if (pdf) result(await bucket.upload(path,pdf,{contentType:'application/pdf'}));
+      const payload = {revision,data:{
+        ...data,pdfPath:path ?? current?.pdfPath ?? null,
+        pdfName:pdf?.name ?? current?.pdfName ?? null
+      }};
+      try {
+        const query = current
+          ? table().update(payload).eq('id',id).eq('revision',current.revision)
+          : table().insert({id,...payload});
+        if (!result(await query.select('id').maybeSingle())) throw new Error('Registro desatualizado.');
+      } catch (error) {
+        // Only a confirmed database rejection is safe to clean up.
+        if (error.code && /^\w{5}$/.test(error.code)) await removeFile(path);
+        if (error.message === 'Registro desatualizado.') await removeFile(path);
+        throw error;
+      }
+      if (path) await removeFile(current?.pdfPath);
+    },
+    async remove(record) {
+      const deleted = result(await table().delete().eq('id',record.id).eq('revision',record.revision).select('id').maybeSingle());
+      if (!deleted) throw new Error('Registro desatualizado.');
+      await removeFile(record.pdfPath);
+    }
+  };
+}
