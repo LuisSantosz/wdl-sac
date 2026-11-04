@@ -171,12 +171,16 @@ dialog::backdrop{background:#061c24a0}
 }
 @media(max-width:440px){.dashboard .hero::after{inset:0 0 0 25%}.board{padding:10px}.metrics{gap:7px}.metric{padding:10px}}
 
-/* Controle circular adaptado de Creatlydev (Uiverse). */
-.theme-toggle{position:relative;flex:none;display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--blue);cursor:pointer;line-height:1;box-shadow:0 3px 10px #12333b18}
+/* Controle de tema adaptado de Type-Delta (Uiverse). */
+.theme-toggle{position:relative;display:grid;place-items:center;flex:none;width:38px;height:38px;color:var(--blue);cursor:pointer;border-radius:50%}
 .theme-toggle #theme{position:absolute;inset:0;margin:0;width:100%;height:100%;opacity:0;cursor:pointer}
-.theme-toggle:has(#theme:focus-visible){outline:2px solid var(--blue);outline-offset:3px}
-.theme-icon{grid-area:1/1;line-height:0;transition:transform .5s ease;pointer-events:none}
-.theme-moon{transition-delay:.2s}
-.theme-sun{transform:scale(0)}
-#theme:checked + .theme-moon{transform:rotate(360deg) scale(0);transition-delay:0s}
-#theme:checked ~ .theme-sun{transform:rotate(360deg) scale(1);transition-delay:.2s}
+.theme-toggle:has(#theme:focus-visible){outline:2px solid var(--blue);outline-offset:2px}
+.theme-toggle svg{width:25px;height:25px;pointer-events:none;transform:rotate(40deg);transition:transform .4s ease}
+.theme-toggle .sunMoon,.theme-toggle .sunRay{transform-origin:center;transform-box:fill-box}
+.theme-toggle .sunMoon{transition:transform .4s ease}
+.theme-toggle .sunRay{transform:scale(0);transition:transform .3s ease}
+.theme-toggle mask>circle{transition:transform .64s cubic-bezier(.41,.64,.32,1.575)}
+#theme:checked+svg{transform:rotate(90deg)}
+#theme:checked+svg mask>circle{transform:translate(16px,-3px)}
+#theme:checked+svg .sunMoon{transform:scale(.55)}
+#theme:checked+svg .sunRay{transform:scale(1);transition-delay:.15s}
