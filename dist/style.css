@@ -1,5 +1,19 @@
-:root{font:15px system-ui,sans-serif;color-scheme:light;--bg:#f4f4f4;--surface:#fff;--text:#111;--muted:#595959;--line:#ddd;--blue:#214de5;--red:#c72c40;--yellow:#825300;--green:#17603d;--rbg:#fff0f2;--ybg:#fff5da;--gbg:#e5f9ec}
-:root[data-theme=dark]{color-scheme:dark;--bg:#000;--surface:#0c0c0c;--text:#f6f6f6;--muted:#adadad;--line:#2c2c2c;--blue:#315af2;--red:#ff8596;--yellow:#ffce67;--green:#a3edbc;--rbg:#291318;--ybg:#29200e;--gbg:#10251a}
+/* Identidade WDL SAC */
+:root{
+  font:15px system-ui,sans-serif;
+  color-scheme:light;
+  --bg:#edf4f3;--surface:#fff;--text:#12333b;--muted:#47616a;--line:#cfdfdf;
+  --blue:#10615a;--primary-text:#fff;--petrol:#12333b;--mint:#86e8c3;--stage:#f3f8f7;
+  --red:#9f323b;--yellow:#79510e;--green:#16624b;
+  --rbg:#fff0ef;--ybg:#fff4dc;--gbg:#e4f6ed;--total-bg:#e2f5ef;
+}
+:root[data-theme=dark]{
+  color-scheme:dark;
+  --bg:#000;--surface:#111818;--text:#f0f8f6;--muted:#aec3c0;--line:#2c4140;
+  --blue:#86e8c3;--primary-text:#12333b;--stage:#0b1111;
+  --red:#ffaaa9;--yellow:#f8d288;--green:#a2e9cb;
+  --rbg:#351f22;--ybg:#312714;--gbg:#16312a;--total-bg:#183330;
+}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:wait}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}[hidden]{display:none!important}
 .shell{width:min(1200px,calc(100% - 48px));margin:auto}.top{background:var(--surface);border-bottom:1px solid var(--line)}.bar,.hero,.board-top,.dialog-head,.dialog-foot{display:flex;align-items:center;justify-content:space-between;gap:18px}.bar{min-height:73px}.brand{font-size:19px;font-weight:780;letter-spacing:-.5px}.brand b{color:var(--red)}
 .primary,.secondary{border:1px solid transparent;border-radius:10px;padding:11px 15px;font-weight:680;transition:filter .15s,transform .15s}.primary{color:white;background:var(--blue);box-shadow:0 4px 12px #214ed430}.secondary{background:var(--surface);color:var(--text);border-color:var(--line)}button:hover{filter:brightness(.94)}button:active{transform:translateY(1px)}
@@ -337,14 +351,6 @@ dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface)
 .sky-switch #theme:focus-visible + .sky-slider{outline:2px solid var(--blue);outline-offset:3px}
 .sky-slider{box-shadow:inset 0 0 0 1px #777}
 
-/* From Uiverse.io by gharsh11032000. Adapted for contrast and sizing. */
-.animated-button{position:relative;display:inline-block;isolation:isolate;overflow:hidden;padding:9px 17px;border:0;border-radius:100px;font-size:14px;font-weight:650;background:#1743bb;color:white;box-shadow:0 0 0 2px #2196f360;transition:box-shadow .6s cubic-bezier(.23,1,.32,1),scale .3s}
-.animated-button span:first-child{position:relative;z-index:1}
-.animated-button span:last-child{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;opacity:0;background:#145cca;transition:width .8s cubic-bezier(.23,1,.32,1),height .8s cubic-bezier(.23,1,.32,1),opacity .4s}
-.animated-button:is(:hover,:focus-visible){box-shadow:0 0 0 5px #2195f360;filter:none}
-.animated-button:is(:hover,:focus-visible) span:last-child{width:220px;height:220px;opacity:1}
-.animated-button:active{scale:.95}
-
 /* From Uiverse.io by andrew-demchenk0. Adapted for the Portuguese label. */
 .delete-button{position:relative;display:inline-flex;align-items:center;overflow:hidden;margin-right:auto;min-height:38px;padding:7px 46px 7px 10px;border:1px solid #ab162b;border-radius:8px;background:#c51b33;color:#fff;font-size:13px;font-weight:650}
 .delete-button .button__text{transition:opacity .3s}
@@ -392,3 +398,53 @@ dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface)
 .portal-messages p{margin-top:5px;white-space:pre-wrap;overflow-wrap:anywhere}
 #portal-copy,#portal-send,#customer-form button{margin-top:8px}
 #portal-status,#customer-feedback{color:var(--muted);margin-block:8px}
+
+/* Painel, diálogos e portal do cliente */
+.top{background:var(--surface)}
+.bar{min-height:66px}
+.dashboard{padding-block:22px}
+.dashboard .hero{
+  min-height:152px;margin:0 0 14px;padding:22px 28px;
+  background:var(--petrol);border:0;border-radius:19px;color:#fff;
+}
+.hero::before{display:none}
+.dashboard .hero::after{
+  inset:0 0 0 45%;opacity:.62;mask-image:none;
+  background:repeating-radial-gradient(ellipse at 89% 48%,transparent 0 24px,#85e8c330 25px 26px);
+}
+.hero h1{font-size:clamp(28px,4vw,42px);line-height:1.08;margin:6px 0 8px}
+.hero p{color:#c7e0dc}
+.hero .hero-kicker{font-size:11px;font-weight:750;letter-spacing:.14em;text-transform:uppercase;color:var(--mint)}
+.primary{color:var(--primary-text)}
+.hero-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:none;background:var(--mint);color:var(--petrol)}
+.hero-action:focus-visible{outline-color:var(--mint)}
+
+.metrics{gap:10px;margin-bottom:18px}
+.metric{--metric-color:var(--accent,var(--blue));background:var(--tint,var(--total-bg));border:1px solid var(--line);border-inline-start:4px solid var(--metric-color);padding:12px 14px;gap:6px}
+.metric strong{font-size:26px}
+.metric span{color:var(--text);font-weight:650}
+.board{padding:16px;border-radius:17px}
+.board-top{margin-bottom:14px}
+.board-top h2{font-size:20px}
+.columns{gap:12px}
+.column{padding:9px;background:var(--stage);border-radius:12px}
+.column-head{padding:7px 9px;background:var(--tint);border-radius:7px}
+.column-head span:last-child{display:grid;place-items:center;min-width:24px;border-radius:20px;background:var(--surface);font-size:12px}
+.card{background:var(--surface);padding:11px 10px;border-left-width:3px}
+.card:hover{border-color:var(--accent);filter:none}
+.card .tag{display:inline-block;background:var(--tint);padding:3px 7px;border-radius:6px}
+.empty{padding:23px 8px}
+.secondary:hover{border-color:var(--blue);filter:none}
+dialog::backdrop{background:#061c24a0}
+.login-brand{flex-direction:column;align-items:flex-start;gap:10px}
+:root[data-theme=dark] .login-brand img{background:#fff;border-radius:6px;padding:4px}
+.portal-messages li{background:var(--stage)}
+.customer-portal header{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--blue);border-radius:15px;padding:18px}
+
+@media(max-width:760px){
+  .dashboard{padding-block:14px}
+  .dashboard .hero{min-height:auto;padding:18px}
+  .board-top{align-items:stretch}
+  .board-top .search{width:100%}
+}
+@media(max-width:440px){.dashboard .hero::after{inset:0 0 0 25%}.board{padding:10px}.metrics{gap:7px}.metric{padding:10px}}
