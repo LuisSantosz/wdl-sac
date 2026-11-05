@@ -251,3 +251,17 @@ button.metric[aria-pressed=true]{outline:2px solid var(--accent,var(--blue));out
 .columns::-webkit-scrollbar{display:none;width:0;height:0}
 .columns:focus-visible,.column:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 @media(max-width:760px){.columns{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(min(285px,100%),1fr);overflow-x:auto}}
+
+/* Navegação adaptada de catraco / Uiverse, tasty-shrimp-6 (MIT). */
+.board-navigation{display:grid;justify-content:center;justify-items:center;gap:8px;margin:8px 0 18px}
+.board-navigation>div{display:flex;justify-content:center;gap:24px}
+.board-arrow{display:grid;place-items:center;width:64px;height:60px;padding:5px;border:0;border-radius:10px;background:transparent;color:#93c5fd;cursor:pointer;transition:transform .2s,opacity .2s}
+.board-arrow svg{display:block;stroke:currentColor;pointer-events:none}
+.board-arrow .arrow-right{rotate:180deg}
+.board-arrow:hover:not(:disabled){filter:none;transform:scale(1.25)}
+.board-arrow:active:not(:disabled){transform:scale(1)}
+.board-arrow:disabled{opacity:.3;cursor:default}
+.column{min-height:0;min-width:0}
+.column-cards{max-height:900px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--blue) var(--bg);scrollbar-gutter:stable}
+.column-cards:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.column-cards::-webkit-scrollbar{width:6px}.column-cards::-webkit-scrollbar-thumb{background:var(--blue);border-radius:8px}.column-cards::-webkit-scrollbar-track{background:var(--bg)}

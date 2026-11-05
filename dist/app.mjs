@@ -21,6 +21,7 @@ let activeStage = 'total';
 function render() {
   const query = $('#search').value.trim().toLocaleLowerCase('pt-BR');
   const metrics = $('#metrics'), board = $('#columns');
+  const scrollPositions = new Map([...board.querySelectorAll('.column')].map(column => [column.dataset.stageId,column.querySelector('.column-cards')?.scrollTop ?? 0]));
   metrics.replaceChildren();
   board.replaceChildren();
   for (const stage of [{id:'total',nome:'Total de solicitações',cor:'total'},...stages]) {
@@ -55,6 +56,7 @@ function render() {
       event.preventDefault();
       event.dataTransfer.dropEffect = 'move';
       group.classList.add('drop-target');
+      scrollCardList(group,event.clientY);
       const boardRect = board.getBoundingClientRect();
       if (event.clientX > boardRect.right-70) board.scrollLeft += 18;
       if (event.clientX < boardRect.left+70) board.scrollLeft -= 18;
@@ -68,7 +70,12 @@ function render() {
       if (record && record.status !== key) moveCard(record,key);
     });
     group.append(heading);
-    if (!list.length) group.append(el('p','empty',query ? 'Nenhum resultado nesta etapa.' : 'Nenhuma solicitação nesta etapa.'));
+    const cardList = el('div','column-cards');
+    cardList.tabIndex = 0;
+    cardList.setAttribute('aria-label','Chamados da etapa '+label);
+    group.append(cardList);
+    cardList.dataset.scrollTop = scrollPositions.get(key) ?? 0;
+    if (!list.length) cardList.append(el('p','empty',query ? 'Nenhum resultado nesta etapa.' : 'Nenhuma solicitação nesta etapa.'));
     for (const record of list) {
       const card = el('article','card');
       const details = el('button','card-open');
@@ -107,11 +114,11 @@ function render() {
       const contacts = el('div','card-contacts');
       fillWhatsApp(contacts,record);
       card.append(drag,details,reason,contacts,process);
-      group.append(card);
+      cardList.append(card);
     }
     board.append(group);
   }
-  requestAnimationFrame(updateBoardNavigation);
+  requestAnimationFrame(() => { updateCardViewports(); updateBoardNavigation(); });
 }
 function addItem(name = '', selected = false) {
   const row = el('div','item');
@@ -700,6 +707,7 @@ function enableTouchDrag(handle,card,record,board) {
     const column = document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-stage-id]');
     destination = column?.dataset.stageId ?? null;
     column?.classList.add('drop-target');
+    if (column) scrollCardList(column,event.clientY);
     if (event.clientY > innerHeight-70) window.scrollBy(0,18);
     if (event.clientY < 70) window.scrollBy(0,-18);
     const bounds = board.getBoundingClientRect();
@@ -754,5 +762,28 @@ function stepBoard(direction) {
 $('#board-prev').onclick = () => stepBoard(-1);
 $('#board-next').onclick = () => stepBoard(1);
 boardColumns.addEventListener('scroll',updateBoardNavigation,{passive:true});
-window.addEventListener('resize',updateBoardNavigation);
-if (typeof ResizeObserver !== 'undefined') new ResizeObserver(updateBoardNavigation).observe(boardColumns);
+window.addEventListener('resize',() => {updateCardViewports();updateBoardNavigation();});
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => {updateCardViewports();updateBoardNavigation();}).observe(boardColumns);
+
+function updateCardViewports() {
+  boardColumns.querySelectorAll('.column-cards').forEach(list => {
+    const cards = [...list.querySelectorAll('.card')].slice(0,3);
+    if (!cards.length) { list.style.maxHeight = ''; return; }
+    const height = cards.reduce((total,card) => {
+      const style = getComputedStyle(card);
+      return total+card.getBoundingClientRect().height+(parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0);
+    },0);
+    if (height > 0) list.style.maxHeight = Math.ceil(height)+'px';
+    if (list.dataset.scrollTop !== undefined) {
+      list.scrollTop = Number(list.dataset.scrollTop);
+      delete list.dataset.scrollTop;
+    }
+  });
+}
+function scrollCardList(column,y) {
+  const list = column.querySelector('.column-cards');
+  if (!list) return;
+  const bounds = list.getBoundingClientRect();
+  if (y > bounds.bottom-48) list.scrollTop += 16;
+  if (y < bounds.top+48) list.scrollTop -= 16;
+}
