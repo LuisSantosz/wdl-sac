@@ -237,3 +237,17 @@ dialog::backdrop{background:#061c24a0}
 #stage-delete{margin-top:12px}#reason-dialog{width:min(480px,calc(100% - 22px))}#reason-error{font-size:13px;color:var(--red);margin-top:10px}
 
 .drag-handle{touch-action:none}.card[draggable=true]{cursor:grab}.card-open{cursor:pointer}
+
+/* Navegação do painel sem barra de rolagem visível. */
+button.metric{text-align:left;cursor:pointer;position:relative;transition:box-shadow .16s,transform .16s}
+button.metric:hover{filter:none;box-shadow:0 3px 12px #12333b14;transform:translateY(-2px)}
+button.metric[aria-pressed=true]{outline:2px solid var(--accent,var(--blue));outline-offset:2px}
+.card-description{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.5;font-weight:400;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.board-navigation{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.board-navigation>span{font-size:12px;color:var(--muted)}
+.board-navigation>div{display:flex;gap:7px}.board-arrow{width:38px;height:34px;padding:0;font-size:20px;line-height:1}
+.board-arrow:disabled{cursor:default;opacity:.35}
+.columns{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(min(285px,100%),1fr);overflow-x:auto;scrollbar-width:none;scroll-padding-inline:0;overscroll-behavior-x:contain}
+.columns::-webkit-scrollbar{display:none;width:0;height:0}
+.columns:focus-visible,.column:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+@media(max-width:760px){.columns{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(min(285px,100%),1fr);overflow-x:auto}}

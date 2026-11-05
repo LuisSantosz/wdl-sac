@@ -17,6 +17,7 @@ function el(tag, className, content) {
   return node;
 }
 let records = [], current, attachment, uploadRun = 0, reading = false, saving = false;
+let activeStage = 'total';
 function render() {
   const query = $('#search').value.trim().toLocaleLowerCase('pt-BR');
   const metrics = $('#metrics'), board = $('#columns');
@@ -25,7 +26,13 @@ function render() {
   for (const stage of [{id:'total',nome:'Total de solicitações',cor:'total'},...stages]) {
     const {id:key,nome:label,cor} = stage;
     const count = key === 'total' ? records.length : records.filter(record => record.status === key).length;
-    const metric = el('article','metric '+cor);
+    const metric = el('button','metric '+cor);
+    metric.type = 'button';
+    metric.dataset.stageId = key;
+    metric.setAttribute('aria-label',key === 'total' ? 'Ver todas as solicitações' : 'Ver chamados da etapa '+label);
+    metric.setAttribute('aria-controls','columns');
+    metric.setAttribute('aria-pressed',String(activeStage === key));
+    metric.onclick = () => navigateStage(key);
     const title = el('span');
     title.append(el('i','dot'), label);
     metric.append(title,el('strong','',count));
@@ -34,6 +41,8 @@ function render() {
     const group = el('section','column '+cor), heading = el('h3','column-head');
     const list = records.filter(record => record.status === key && [record.crmCodigo,record.cliente,record.contato,record.vendedor,record.nf].some(value => String(value ?? '').toLocaleLowerCase('pt-BR').includes(query)));
     group.dataset.stageId = key;
+    group.tabIndex = -1;
+    group.setAttribute('aria-label',label);
     heading.append(el('span','stage-name',label),el('span','stage-count',list.length));
     const editStage = el('button','stage-edit','✎');
     editStage.type = 'button';
@@ -65,6 +74,8 @@ function render() {
       const details = el('button','card-open');
       details.type = 'button';
       details.append(el('span','crm-code',record.crmCodigo ? 'SAC #'+record.crmCodigo : record.nf ? 'NF '+record.nf : 'SAC #'+record.id.slice(-8).toUpperCase()),el('strong','',record.cliente));
+      const description = String(record.descricao || record.crmObservacao || '').replace(/\s+/g,' ').trim();
+      if (description) details.append(el('p','card-description',description.length > 240 ? description.slice(0,237)+'…' : description));
       if (record.crmCriacao) details.append(el('small','', 'Criado em '+record.crmCriacao));
       details.addEventListener('click',() => open(record));
       const reason = el('button','tag reason-edit',record.problema || record.crmSituacao || 'A classificar');
@@ -100,6 +111,7 @@ function render() {
     }
     board.append(group);
   }
+  requestAnimationFrame(updateBoardNavigation);
 }
 function addItem(name = '', selected = false) {
   const row = el('div','item');
@@ -703,3 +715,44 @@ function enableTouchDrag(handle,card,record,board) {
   });
   handle.addEventListener('pointercancel',clear);
 }
+
+const boardColumns = $('#columns');
+function reducedMotion() { return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; }
+function updateBoardNavigation() {
+  const max = Math.max(0,boardColumns.scrollWidth-boardColumns.clientWidth);
+  $('#board-prev').disabled = boardColumns.scrollLeft <= 2;
+  $('#board-next').disabled = boardColumns.scrollLeft >= max-2;
+}
+function scrollBoard(left) {
+  boardColumns.scrollTo({left,behavior:reducedMotion() ? 'instant' : 'smooth'});
+  requestAnimationFrame(updateBoardNavigation);
+}
+function navigateStage(key) {
+  const column = [...boardColumns.children].find(column => column.dataset.stageId === key);
+  activeStage = key;
+  if (key === 'total') {
+    $('#search').value = '';
+    render();
+    scrollBoard(0);
+    boardColumns.focus({preventScroll:true});
+  } else if (column) {
+    const target = boardColumns.scrollLeft+column.getBoundingClientRect().left-boardColumns.getBoundingClientRect().left;
+    scrollBoard(target);
+    column.focus({preventScroll:true});
+  }
+  $('#metrics').querySelectorAll('.metric').forEach(metric => metric.setAttribute('aria-pressed',String(metric.dataset.stageId === key)));
+  boardColumns.scrollIntoView({block:'nearest',behavior:reducedMotion() ? 'instant' : 'smooth'});
+}
+function stepBoard(direction) {
+  const columns = [...boardColumns.children];
+  const left = boardColumns.getBoundingClientRect().left;
+  const positions = columns.map(column => boardColumns.scrollLeft+column.getBoundingClientRect().left-left);
+  const current = boardColumns.scrollLeft;
+  const target = direction > 0 ? positions.find(position => position > current+3) : positions.reverse().find(position => position < current-3);
+  if (target !== undefined) scrollBoard(target);
+}
+$('#board-prev').onclick = () => stepBoard(-1);
+$('#board-next').onclick = () => stepBoard(1);
+boardColumns.addEventListener('scroll',updateBoardNavigation,{passive:true});
+window.addEventListener('resize',updateBoardNavigation);
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(updateBoardNavigation).observe(boardColumns);
