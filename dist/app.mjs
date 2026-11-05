@@ -1,11 +1,12 @@
+import {readCrm,whatsappContacts,whatsappUrl} from './crm.mjs';
 import {showMessages} from './portal-messages.mjs';
 import {cloudConfig} from './cloud-config.mjs';
 const useCloud = true;
 import {readInvoice} from './invoice.mjs';
 const $ = selector => document.querySelector(selector);
-const statuses = {nova:'Nova', andamento:'Em andamento', concluida:'Concluída'};
+const statuses = {nova:'Em aberto', andamento:'Em andamento', concluida:'Finalizado'};
 const editor = $('#editor'), form = $('#form'), whole = $('#whole'), pdf = $('#pdf');
-const fields = ['cliente','vendedor','nf','pedido','data','endereco','problema','descricao','status','novaNF','rastreio','transportadora','entrega'];
+const fields = ['cliente','vendedor','nf','pedido','data','endereco','problema','descricao','status','novaNF','rastreio','transportadora','entrega','contato'];
 let cloud;
 function el(tag, className, content) {
   const node = document.createElement(tag);
@@ -28,15 +29,25 @@ function render() {
     metrics.append(metric);
     if (key === 'total') continue;
     const group = el('section','column '+key), heading = el('h3','column-head');
-    const list = records.filter(record => record.status === key && [record.cliente,record.vendedor,record.nf].some(value => value.toLocaleLowerCase('pt-BR').includes(query)));
+    const list = records.filter(record => record.status === key && [record.crmCodigo,record.cliente,record.contato,record.vendedor,record.nf].some(value => String(value ?? '').toLocaleLowerCase('pt-BR').includes(query)));
     heading.append(el('span','',label),el('span','',list.length));
     group.append(heading);
     if (!list.length) group.append(el('p','empty',query ? 'Nenhum resultado nesta etapa.' : 'Nenhuma solicitação nesta etapa.'));
     for (const record of list) {
-      const card = el('button','card');
-      card.type = 'button';
-      card.append(el('strong','',record.cliente),el('small','',record.vendedor+' · NF '+record.nf),el('span','tag',record.problema));
-      card.addEventListener('click',() => open(record));
+      const card = el('article','card');
+      const details = el('button','card-open');
+      details.type = 'button';
+      details.append(el('span','crm-code',record.crmCodigo ? 'SAC #'+record.crmCodigo : record.nf ? 'NF '+record.nf : 'SAC #'+record.id.slice(-8).toUpperCase()),el('strong','',record.cliente),el('span','tag',record.crmSituacao || record.problema || 'A classificar'));
+      if (record.crmCriacao) details.append(el('small','', 'Criado em '+record.crmCriacao));
+      details.addEventListener('click',() => open(record));
+      const process = el('select','card-status');
+      process.setAttribute('aria-label','Processo do chamado '+(record.crmCodigo || record.nf || record.id));
+      for (const [value,label] of Object.entries(statuses)) process.add(new Option(label,value));
+      process.value = record.status;
+      process.onchange = () => changeProcess(record,process);
+      const contacts = el('div','card-contacts');
+      fillWhatsApp(contacts,record);
+      card.append(details,contacts,process);
       group.append(card);
     }
     board.append(group);
@@ -75,13 +86,25 @@ function open(record) {
   $('#tracking').hidden = !record;
   $('#delete').hidden = !record;
   $('#copy-status').textContent = '';
-  $('#form-title').textContent = record ? 'Solicitação · NF '+record.nf : 'Nova solicitação';
+  $('#crm-code').value = record?.crmCodigo || (record ? record.id.slice(-8).toUpperCase() : 'Gerado ao cadastrar');
+  $('#crm-source').hidden = !record?.crmCodigo;
+  $('#crm-source-title').textContent = record?.crmCodigo ? 'Star1CRM · '+record.crmCriacao+' · '+(record.crmSituacao || 'Sem classificação') : '';
+  $('#crm-observation').textContent = record?.crmObservacao || '';
+  form.elements.problema.querySelectorAll('[data-crm]').forEach(option => option.remove());
+  if (record?.problema && ![...form.elements.problema.options].some(option => option.value === record.problema)) {
+    const option = new Option(record.problema,record.problema);
+    option.dataset.crm = 'true';
+    form.elements.problema.add(option);
+  }
+  fillWhatsApp($('#record-whatsapp'),record);
+
+  $('#form-title').textContent = record ? (record.crmCodigo ? 'SAC #'+record.crmCodigo : 'Solicitação · NF '+record.nf) : 'Nova solicitação';
   $('#error').textContent = '';
   if (record) {
     for (const field of fields) form.elements[field].value = record[field] ?? '';
     whole.checked = record.inteira;
-    for (const item of record.items) addItem(item.name,item.selected);
-    for (const entry of record.history.slice().reverse()) {
+    for (const item of record.items ?? []) addItem(item.name,item.selected);
+    for (const entry of (record.history ?? []).slice().reverse()) {
       $('#history').append(el('li','',new Date(entry.at).toLocaleString('pt-BR')+' · '+entry.text));
     }
   }
@@ -96,7 +119,7 @@ function syncBusy() {
 const deleteDialog = $('#delete-dialog');
 $('#delete').onclick = () => {
   if (!current || saving || reading) return;
-  $('#delete-description').textContent = 'A solicitação da NF '+current.nf+' e o PDF anexado serão removidos do SAC.';
+  $('#delete-description').textContent = 'A solicitação '+(current.crmCodigo ? '#'+current.crmCodigo : 'da NF '+current.nf)+' e o PDF anexado serão removidos do SAC.';
   $('#delete-error').textContent = '';
   deleteDialog.showModal();
 };
@@ -243,7 +266,7 @@ form.onsubmit = async event => {
     name:row.querySelector('input[type=text]').value.trim(),
     selected:row.querySelector('input[type=checkbox]').checked
   })).filter(item => item.name);
-  if (!data.cliente || !data.vendedor || !data.nf) { error.textContent = 'Informe cliente, vendedor e número da NF.'; return; }
+  if (!data.cliente) { error.textContent = 'Informe o nome do cliente.'; return; }
   if (!whole.checked && !items.some(item => item.selected)) { error.textContent = 'Selecione ao menos um item afetado ou marque a NF inteira.'; return; }
   const at = Date.now();
   const changes = [];
@@ -259,7 +282,7 @@ form.onsubmit = async event => {
     const note = form.elements.nota.value.trim();
     if (note) changes.push(note);
   }
-  const record = {...data,id:current?.id ?? Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2,'0')).join(''),createdAt:current?.createdAt ?? at,inteira:whole.checked,items,pdf:attachment,history:[...(current?.history ?? []),...changes.map(text => ({at,text}))]};
+  const record = {...current,...data,id:current?.id ?? Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2,'0')).join(''),createdAt:current?.createdAt ?? at,inteira:whole.checked,items,pdf:attachment,history:[...(current?.history ?? []),...changes.map(text => ({at,text}))]};
   saving = true;
   syncBusy();
   try {
@@ -416,4 +439,88 @@ $('#portal-send').onclick = () => {
     return;
   }
   runPortal(id => cloud.reply(id,message),'Resposta enviada.');
+};
+
+function fillWhatsApp(container,record) {
+  container.replaceChildren();
+  if (!record) return;
+  const contacts = whatsappContacts(record.contato);
+  for (const contact of contacts) {
+    const link = el('a','whatsapp-link','WhatsApp · '+contact.label);
+    link.href = whatsappUrl(record,contact.number);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.title = 'Abra usando o WhatsApp do SAC · 11 2538-8588';
+    container.append(link);
+  }
+  if (record.contato && !contacts.length) container.append(el('small','','Confira o telefone: '+record.contato));
+}
+
+form.elements.contato.addEventListener('input',() => fillWhatsApp($('#record-whatsapp'),{
+  ...current,cliente:form.elements.cliente.value,contato:form.elements.contato.value
+}));
+
+async function changeProcess(record,select) {
+  const next = select.value;
+  if (next === record.status) return;
+  select.disabled = true;
+  $('#board-message').textContent = 'Salvando processo…';
+  try {
+    await cloud.save({...record,status:next,history:[...(record.history ?? []),{
+      at:Date.now(),text:'Status alterado para '+statuses[next]+'.'
+    }]},record);
+    await refresh();
+    $('#board-message').textContent = 'Processo atualizado.';
+  } catch {
+    select.value = record.status;
+    $('#board-message').textContent = 'Não foi possível salvar. Atualize a página antes de tentar novamente.';
+  } finally { select.disabled = false; }
+}
+
+const crmDialog = $('#crm-dialog'), crmFile = $('#crm-file');
+let importCalls = [], importing = false;
+$('#crm-import').onclick = () => crmFile.click();
+crmFile.onchange = async () => {
+  const file = crmFile.files[0];
+  if (!file || importing) return;
+  $('#crm-import').disabled = true;
+  $('#board-message').textContent = 'Lendo exportação do CRM…';
+  try {
+    importCalls = await readCrm(file);
+    const codes = new Set(records.map(record => record.crmCodigo));
+    const existing = importCalls.filter(call => codes.has(call.crmCodigo)).length;
+    $('#crm-summary').textContent = importCalls.length+' chamados encontrados · '+existing+' já cadastrados.';
+    $('#crm-error').textContent = '';
+    const preview = $('#crm-preview');
+    preview.replaceChildren();
+    for (const call of importCalls) preview.append(el('p','','#'+call.crmCodigo+' · '+call.cliente));
+    crmDialog.showModal();
+    $('#board-message').textContent = '';
+  } catch (error) {
+    $('#board-message').textContent = error.message || 'Não foi possível ler a planilha.';
+  } finally {
+    $('#crm-import').disabled = false;
+    crmFile.value = '';
+  }
+};
+crmDialog.addEventListener('cancel',event => {if (importing) event.preventDefault();});
+$('#crm-cancel').onclick = () => {if (!importing) crmDialog.close();};
+$('#crm-confirm').onclick = async () => {
+  if (importing || !importCalls.length) return;
+  importing = true;
+  $('#crm-confirm').disabled = $('#crm-cancel').disabled = true;
+  $('#crm-error').textContent = '';
+  try {
+    const result = await cloud.importCrm(importCalls);
+    importCalls = [];
+    crmDialog.close();
+    await refresh();
+    $('#board-message').textContent = result.novos+' chamados novos · '+result.atualizados+' atualizados.';
+  } catch {
+    $('#crm-error').textContent = 'Não foi possível concluir. Reabra a importação para tentar novamente. Códigos existentes serão atualizados.';
+    $('#board-message').textContent = 'Atualize a página para conferir os chamados.';
+  } finally {
+    importing = false;
+    $('#crm-confirm').disabled = $('#crm-cancel').disabled = false;
+  }
 };

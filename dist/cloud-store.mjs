@@ -43,6 +43,9 @@ export function connect(config) {
         if (rows.length < pageSize) return records;
       }
     },
+    async importCrm(calls) {
+      return result(await client.rpc('sac_importar_crm',{p_chamados:calls}));
+    },
     async portal(id) {
       const [link,messages] = await Promise.all([
         client.from('sac_links').select('token,ativo').eq('solicitacao_id',id).maybeSingle(),

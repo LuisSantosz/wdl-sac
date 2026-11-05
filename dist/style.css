@@ -184,3 +184,24 @@ dialog::backdrop{background:#061c24a0}
 #theme:checked+svg mask>circle{transform:translate(16px,-3px)}
 #theme:checked+svg .sunMoon{transform:scale(.55)}
 #theme:checked+svg .sunRay{transform:scale(1);transition-delay:.15s}
+
+.hero-buttons{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hero-buttons .secondary{background:transparent;border-color:#c7e0dc88;color:#e0f6ee}
+.sac-contact{font-size:12px;color:var(--muted);margin:0 0 12px}
+#board-message{margin:0 0 8px;font-size:13px;color:var(--blue)}
+.card{padding:0 0 10px}
+.card-open{display:block;width:100%;border:0;background:transparent;color:var(--text);text-align:left;padding:11px 10px;cursor:pointer}
+.card-open:hover{filter:none;background:var(--tint)}
+.crm-code{display:block;color:var(--accent);font-size:19px;line-height:1.2;font-weight:800;letter-spacing:.02em;margin-bottom:5px}
+.card-open strong{font-size:14px;line-height:1.4}
+.card-status{width:calc(100% - 20px);margin:8px 10px 0;background:var(--surface);font-size:13px;font-weight:650}
+.card-contacts{padding-inline:10px;display:grid;gap:5px}
+.whatsapp-link{display:inline-flex;align-items:center;width:fit-content;max-width:100%;overflow-wrap:anywhere;padding:6px 9px;border-radius:7px;border:1px solid var(--line);color:var(--green);background:var(--gbg);font-size:12px;font-weight:650;text-decoration:none}
+.whatsapp-link:hover{border-color:var(--green)}
+.whatsapp-link:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+#crm-preview{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-block:12px}
+#crm-preview p{padding:7px 10px;border-bottom:1px solid var(--line);font-size:13px}
+#crm-summary{font-weight:750;margin-bottom:8px}
+#crm-error{color:var(--red);font-size:13px}
+.crm-observation{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 14px;padding:10px;background:var(--bg);border-radius:8px;font-size:13px}
+#crm-source-title{color:var(--muted);font-size:12px}

@@ -5,7 +5,7 @@ const $ = id => document.getElementById(id);
 const token = location.hash.slice(1);
 const feedback = $('customer-feedback');
 const form = $('customer-form');
-const statuses = {nova:'Nova',andamento:'Em andamento',concluida:'Concluída'};
+const statuses = {nova:'Em aberto',andamento:'Em andamento',concluida:'Finalizado'};
 
 async function load(message) {
   const controls = [$('customer-refresh'),...form.elements];
