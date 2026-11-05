@@ -27,3 +27,9 @@ A interface roda como um Static Site no Render. O Supabase guarda as solicitaç�
 - As solicitações já cadastradas no painel anterior estão salvas no navegador daquele endereço. A nova instalação começa vazia. A migração precisa ser feita separadamente.
 - A versão aceita PDFs de até 20 MB. O projeto gratuito do Supabase tem cotas de banco, arquivos e tráfego. Projetos gratuitos podem ser pausados após uma semana de inatividade.
 - O banco e o armazenamento de arquivos são operações separadas. Falhas de rede durante a gravação ou a exclusão podem deixar PDFs sem referência no bucket. Confira as referências antes de remover arquivos pelo Dashboard.
+
+## Etapas personalizadas
+
+Execute `supabase-etapas.sql` uma vez em instalações existentes, após `supabase-acompanhamento.sql`. A migração cria as etapas compartilhadas com acesso restrito à equipe e atualiza o portal do cliente.
+
+No painel, clique em **＋ Nova etapa**, informe um nome e escolha uma cor. A nova coluna aparece antes de **Finalizado**. Para mover um chamado, use a seleção de etapa no próprio card ou no formulário da solicitação. As três etapas originais continuam disponíveis. Nomes repetidos são bloqueados; a importação do CRM preserva a etapa escolhida. O cliente também vê o nome da etapa atual no link de acompanhamento.

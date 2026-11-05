@@ -33,7 +33,7 @@ async function load(message) {
       return;
     }
     $('customer-protocol').textContent = data.protocolo;
-    $('customer-status').textContent = statuses[data.status] ?? 'Nova';
+    $('customer-status').textContent = data.etapa || statuses[data.status] || 'Em aberto';
     showMessages($('customer-messages'),data.mensagens);
     $('customer-case').hidden = false;
     if (message) form.reset();

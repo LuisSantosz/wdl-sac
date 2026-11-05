@@ -205,3 +205,24 @@ dialog::backdrop{background:#061c24a0}
 #crm-error{color:var(--red);font-size:13px}
 .crm-observation{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 14px;padding:10px;background:var(--bg);border-radius:8px;font-size:13px}
 #crm-source-title{color:var(--muted);font-size:12px}
+
+/* Etapas compartilhadas do atendimento */
+.board-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+#stage-new{white-space:nowrap}
+.metrics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.columns{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(285px,1fr);overflow-x:auto;align-items:start;padding-bottom:10px;scrollbar-width:thin;scrollbar-color:var(--blue) var(--bg)}
+.stage-azul{--accent:#2155a1;--tint:#edf4ff}
+.stage-roxo{--accent:#7643a3;--tint:#f4edfc}
+.stage-laranja{--accent:#945014;--tint:#fff1e5}
+.metric.stage-azul,.metric.stage-roxo,.metric.stage-laranja{background:var(--tint);border-color:var(--accent)}
+.metric.stage-azul span,.metric.stage-roxo span,.metric.stage-laranja span{color:var(--accent)}
+[data-theme=dark] .stage-azul{--accent:#a6c8ff;--tint:#15263e}
+[data-theme=dark] .stage-roxo{--accent:#d8b5ff;--tint:#2a1b38}
+[data-theme=dark] .stage-laranja{--accent:#ffc590;--tint:#352316}
+#stage-dialog{width:min(480px,calc(100% - 22px))}
+#stage-form .form-body>p{font-size:13px;color:var(--muted);margin-bottom:14px}
+#stage-form label+label{margin-top:12px}
+#stage-form #stage-error{color:var(--red);margin:12px 0 0}
+@media(max-width:760px){.board-tools{width:100%;justify-content:flex-start}.board-tools .search{flex:1;min-width:0}.columns{grid-auto-flow:row;grid-template-columns:minmax(0,1fr);grid-auto-columns:auto;overflow-x:visible}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.column-head{gap:8px}.column-head span:first-child{min-width:0;overflow-wrap:anywhere}.column-head span:last-child{flex-shrink:0}.metric span{overflow-wrap:anywhere}

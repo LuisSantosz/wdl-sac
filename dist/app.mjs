@@ -1,10 +1,12 @@
+import {buildStages} from './stages.mjs';
 import {readCrm,whatsappContacts,whatsappUrl} from './crm.mjs';
 import {showMessages} from './portal-messages.mjs';
 import {cloudConfig} from './cloud-config.mjs';
 const useCloud = true;
 import {readInvoice} from './invoice.mjs';
 const $ = selector => document.querySelector(selector);
-const statuses = {nova:'Em aberto', andamento:'Em andamento', concluida:'Finalizado'};
+let stages = buildStages([]);
+let statuses = Object.fromEntries(stages.map(stage => [stage.id,stage.nome]));
 const editor = $('#editor'), form = $('#form'), whole = $('#whole'), pdf = $('#pdf');
 const fields = ['cliente','vendedor','nf','pedido','data','endereco','problema','descricao','status','novaNF','rastreio','transportadora','entrega','contato'];
 let cloud;
@@ -20,15 +22,16 @@ function render() {
   const metrics = $('#metrics'), board = $('#columns');
   metrics.replaceChildren();
   board.replaceChildren();
-  for (const [key,label] of [['total','Total de solicitações'],...Object.entries(statuses)]) {
+  for (const stage of [{id:'total',nome:'Total de solicitações',cor:'total'},...stages]) {
+    const {id:key,nome:label,cor} = stage;
     const count = key === 'total' ? records.length : records.filter(record => record.status === key).length;
-    const metric = el('article','metric '+key);
+    const metric = el('article','metric '+cor);
     const title = el('span');
     title.append(el('i','dot'), label);
     metric.append(title,el('strong','',count));
     metrics.append(metric);
     if (key === 'total') continue;
-    const group = el('section','column '+key), heading = el('h3','column-head');
+    const group = el('section','column '+cor), heading = el('h3','column-head');
     const list = records.filter(record => record.status === key && [record.crmCodigo,record.cliente,record.contato,record.vendedor,record.nf].some(value => String(value ?? '').toLocaleLowerCase('pt-BR').includes(query)));
     heading.append(el('span','',label),el('span','',list.length));
     group.append(heading);
@@ -81,6 +84,7 @@ function open(record) {
   current = record;
   attachment = record?.pdf;
   form.reset();
+  form.elements.status.replaceChildren(...stages.map(stage => new Option(stage.nome,stage.id)));
   $('#items').replaceChildren();
   $('#history').replaceChildren();
   $('#tracking').hidden = !record;
@@ -304,7 +308,10 @@ $('#theme').onchange = event => {
   try { localStorage.setItem('wdl-sac-theme',value); } catch {}
 };
 async function refresh() {
-  records = (await cloud.list()).sort((a,b) => b.createdAt - a.createdAt);
+  const [cases,customStages] = await Promise.all([cloud.list(),cloud.listStages()]);
+  stages = buildStages(customStages);
+  statuses = Object.fromEntries(stages.map(stage => [stage.id,stage.nome]));
+  records = cases.sort((a,b) => b.createdAt - a.createdAt);
   render();
 }
 render();
@@ -462,7 +469,7 @@ form.elements.contato.addEventListener('input',() => fillWhatsApp($('#record-wha
 
 async function changeProcess(record,select) {
   const next = select.value;
-  if (next === record.status) return;
+  if (next === record.status || !Object.hasOwn(statuses,next)) return;
   select.disabled = true;
   $('#board-message').textContent = 'Salvando processo…';
   try {
@@ -522,5 +529,40 @@ $('#crm-confirm').onclick = async () => {
   } finally {
     importing = false;
     $('#crm-confirm').disabled = $('#crm-cancel').disabled = false;
+  }
+};
+
+const stageDialog = $('#stage-dialog'), stageForm = $('#stage-form');
+let creatingStage = false;
+$('#stage-new').onclick = () => {
+  stageForm.reset();
+  $('#stage-error').textContent = '';
+  stageDialog.showModal();
+  stageForm.elements.nome.focus();
+};
+$('#stage-cancel').onclick = () => { if (!creatingStage) stageDialog.close(); };
+stageDialog.addEventListener('cancel',event => { if (creatingStage) event.preventDefault(); });
+stageForm.onsubmit = async event => {
+  event.preventDefault();
+  if (creatingStage) return;
+  const nome = stageForm.elements.nome.value.replace(/\s+/g,' ').trim();
+  if (!nome || nome.length > 60) { $('#stage-error').textContent = 'Informe um nome de até 60 caracteres.'; return; }
+  if (stages.some(stage => stage.nome.toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'))) {
+    $('#stage-error').textContent = 'Já existe uma etapa com esse nome.'; return;
+  }
+  creatingStage = true;
+  $('#stage-create').disabled = $('#stage-cancel').disabled = true;
+  $('#stage-error').textContent = '';
+  try {
+    await cloud.createStage({nome,cor:stageForm.elements.cor.value});
+    await refresh();
+    stageDialog.close();
+    $('#board-message').textContent = 'Etapa criada. Selecione essa etapa no card para mover o chamado.';
+    $('#columns').scrollLeft = $('#columns').scrollWidth;
+  } catch (error) {
+    $('#stage-error').textContent = error.code === '23505' ? 'Já existe uma etapa com esse nome.' : 'Não foi possível criar a etapa. Recarregue a página para conferir antes de tentar novamente.';
+  } finally {
+    creatingStage = false;
+    $('#stage-create').disabled = $('#stage-cancel').disabled = false;
   }
 };

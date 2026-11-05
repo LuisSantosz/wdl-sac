@@ -43,6 +43,12 @@ export function connect(config) {
         if (rows.length < pageSize) return records;
       }
     },
+    async listStages() {
+      return result(await client.from('sac_etapas').select('id,nome,cor').order('criada_em').order('id'));
+    },
+    async createStage(stage) {
+      return result(await client.from('sac_etapas').insert(stage).select('id').single());
+    },
     async importCrm(calls) {
       return result(await client.rpc('sac_importar_crm',{p_chamados:calls}));
     },
