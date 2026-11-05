@@ -1,11 +1,11 @@
-import {buildStages} from './stages.mjs';
+import {buildStages,baseStages} from './stages.mjs';
 import {readCrm,whatsappContacts,whatsappUrl} from './crm.mjs';
 import {showMessages} from './portal-messages.mjs';
 import {cloudConfig} from './cloud-config.mjs';
 const useCloud = true;
 import {readInvoice} from './invoice.mjs';
 const $ = selector => document.querySelector(selector);
-let stages = buildStages([]);
+let stages = buildStages(baseStages);
 let statuses = Object.fromEntries(stages.map(stage => [stage.id,stage.nome]));
 const editor = $('#editor'), form = $('#form'), whole = $('#whole'), pdf = $('#pdf');
 const fields = ['cliente','vendedor','nf','pedido','data','endereco','problema','descricao','status','novaNF','rastreio','transportadora','entrega','contato'];
@@ -33,16 +33,61 @@ function render() {
     if (key === 'total') continue;
     const group = el('section','column '+cor), heading = el('h3','column-head');
     const list = records.filter(record => record.status === key && [record.crmCodigo,record.cliente,record.contato,record.vendedor,record.nf].some(value => String(value ?? '').toLocaleLowerCase('pt-BR').includes(query)));
-    heading.append(el('span','',label),el('span','',list.length));
+    group.dataset.stageId = key;
+    heading.append(el('span','stage-name',label),el('span','stage-count',list.length));
+    const editStage = el('button','stage-edit','✎');
+    editStage.type = 'button';
+    editStage.setAttribute('aria-label','Editar etapa '+label);
+    editStage.title = 'Editar nome, cor ou excluir etapa';
+    editStage.onclick = () => openStage(stage);
+    heading.append(editStage);
+    group.addEventListener('dragover',event => {
+      if (!draggedId || movingCard) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      group.classList.add('drop-target');
+      const boardRect = board.getBoundingClientRect();
+      if (event.clientX > boardRect.right-70) board.scrollLeft += 18;
+      if (event.clientX < boardRect.left+70) board.scrollLeft -= 18;
+    });
+    group.addEventListener('dragleave',event => { if (!group.contains(event.relatedTarget)) group.classList.remove('drop-target'); });
+    group.addEventListener('drop',event => {
+      event.preventDefault();
+      group.classList.remove('drop-target');
+      const record = records.find(record => record.id === draggedId);
+      draggedId = null;
+      if (record && record.status !== key) moveCard(record,key);
+    });
     group.append(heading);
     if (!list.length) group.append(el('p','empty',query ? 'Nenhum resultado nesta etapa.' : 'Nenhuma solicitação nesta etapa.'));
     for (const record of list) {
       const card = el('article','card');
       const details = el('button','card-open');
       details.type = 'button';
-      details.append(el('span','crm-code',record.crmCodigo ? 'SAC #'+record.crmCodigo : record.nf ? 'NF '+record.nf : 'SAC #'+record.id.slice(-8).toUpperCase()),el('strong','',record.cliente),el('span','tag',record.crmSituacao || record.problema || 'A classificar'));
+      details.append(el('span','crm-code',record.crmCodigo ? 'SAC #'+record.crmCodigo : record.nf ? 'NF '+record.nf : 'SAC #'+record.id.slice(-8).toUpperCase()),el('strong','',record.cliente));
       if (record.crmCriacao) details.append(el('small','', 'Criado em '+record.crmCriacao));
       details.addEventListener('click',() => open(record));
+      const reason = el('button','tag reason-edit',record.problema || record.crmSituacao || 'A classificar');
+      reason.type = 'button';
+      reason.setAttribute('aria-label','Editar motivo do chamado '+(record.crmCodigo || record.id));
+      reason.title = 'Clique para editar o motivo';
+      reason.onclick = () => openReason(record);
+      const drag = el('span','drag-handle','⠿ Arrastar chamado');
+      card.draggable = true;
+      drag.title = 'Arraste para outra etapa';
+      card.addEventListener('dragstart',event => {
+        if (event.target.closest('a,input,select,.reason-edit') || movingCard) { event.preventDefault(); return; }
+        draggedId = record.id;
+        event.dataTransfer.setData('text/plain',record.id);
+        event.dataTransfer.effectAllowed = 'move';
+        card.classList.add('dragging');
+      });
+      card.addEventListener('dragend',() => {
+        draggedId = null;
+        card.classList.remove('dragging');
+        board.querySelectorAll('.drop-target').forEach(column => column.classList.remove('drop-target'));
+      });
+      enableTouchDrag(drag,card,record,board);
       const process = el('select','card-status');
       process.setAttribute('aria-label','Processo do chamado '+(record.crmCodigo || record.nf || record.id));
       for (const [value,label] of Object.entries(statuses)) process.add(new Option(label,value));
@@ -50,7 +95,7 @@ function render() {
       process.onchange = () => changeProcess(record,process);
       const contacts = el('div','card-contacts');
       fillWhatsApp(contacts,record);
-      card.append(details,contacts,process);
+      card.append(drag,details,reason,contacts,process);
       group.append(card);
     }
     board.append(group);
@@ -94,12 +139,6 @@ function open(record) {
   $('#crm-source').hidden = !record?.crmCodigo;
   $('#crm-source-title').textContent = record?.crmCodigo ? 'Star1CRM · '+record.crmCriacao+' · '+(record.crmSituacao || 'Sem classificação') : '';
   $('#crm-observation').textContent = record?.crmObservacao || '';
-  form.elements.problema.querySelectorAll('[data-crm]').forEach(option => option.remove());
-  if (record?.problema && ![...form.elements.problema.options].some(option => option.value === record.problema)) {
-    const option = new Option(record.problema,record.problema);
-    option.dataset.crm = 'true';
-    form.elements.problema.add(option);
-  }
   fillWhatsApp($('#record-whatsapp'),record);
 
   $('#form-title').textContent = record ? (record.crmCodigo ? 'SAC #'+record.crmCodigo : 'Solicitação · NF '+record.nf) : 'Nova solicitação';
@@ -270,12 +309,14 @@ form.onsubmit = async event => {
     name:row.querySelector('input[type=text]').value.trim(),
     selected:row.querySelector('input[type=checkbox]').checked
   })).filter(item => item.name);
+  if (!Object.hasOwn(statuses,data.status)) { error.textContent = 'Crie ou selecione uma etapa válida antes de salvar.'; return; }
   if (!data.cliente) { error.textContent = 'Informe o nome do cliente.'; return; }
   if (!whole.checked && !items.some(item => item.selected)) { error.textContent = 'Selecione ao menos um item afetado ou marque a NF inteira.'; return; }
   const at = Date.now();
   const changes = [];
   if (!current) changes.push('Solicitação cadastrada.');
   else {
+    if (current.problema !== data.problema) changes.push('Motivo alterado para '+data.problema+'.');
     if (current.status !== data.status) changes.push('Status alterado para '+statuses[data.status]+'.');
     for (const [field,label] of [['novaNF','Nova NF'],['rastreio','Rastreio'],['transportadora','Transportadora'],['entrega','Data de entrega']]) {
       if ((current[field] ?? '') !== data[field]) {
@@ -467,21 +508,26 @@ form.elements.contato.addEventListener('input',() => fillWhatsApp($('#record-wha
   ...current,cliente:form.elements.cliente.value,contato:form.elements.contato.value
 }));
 
+let draggedId = null, movingCard = false;
 async function changeProcess(record,select) {
-  const next = select.value;
-  if (next === record.status || !Object.hasOwn(statuses,next)) return;
   select.disabled = true;
+  await moveCard(record,select.value);
+  select.disabled = false;
+}
+async function moveCard(record,next) {
+  if (movingCard || next === record.status || !Object.hasOwn(statuses,next)) return;
+  movingCard = true;
   $('#board-message').textContent = 'Salvando processo…';
   try {
     await cloud.save({...record,status:next,history:[...(record.history ?? []),{
       at:Date.now(),text:'Status alterado para '+statuses[next]+'.'
     }]},record);
     await refresh();
-    $('#board-message').textContent = 'Processo atualizado.';
+    $('#board-message').textContent = 'Chamado movido para '+statuses[next]+'.';
   } catch {
-    select.value = record.status;
-    $('#board-message').textContent = 'Não foi possível salvar. Atualize a página antes de tentar novamente.';
-  } finally { select.disabled = false; }
+    $('#board-message').textContent = 'Não foi possível mover. Atualize a página antes de tentar novamente.';
+    render();
+  } finally { movingCard = false; }
 }
 
 const crmDialog = $('#crm-dialog'), crmFile = $('#crm-file');
@@ -533,36 +579,127 @@ $('#crm-confirm').onclick = async () => {
 };
 
 const stageDialog = $('#stage-dialog'), stageForm = $('#stage-form');
-let creatingStage = false;
-$('#stage-new').onclick = () => {
+let creatingStage = false, editingStage = null;
+function openStage(stage = null) {
+  editingStage = stage;
   stageForm.reset();
+  $('#stage-title').textContent = stage ? 'Editar etapa' : 'Nova etapa do atendimento';
+  $('#stage-create').textContent = stage ? 'Salvar alterações' : 'Criar etapa';
+  $('#stage-delete-area').hidden = !stage;
+  $('#stage-delete').disabled = stages.length <= 1;
   $('#stage-error').textContent = '';
+  if (stage) {
+    stageForm.elements.nome.value = stage.nome;
+    stageForm.elements.cor.value = stage.cor;
+    $('#stage-destination').replaceChildren(...stages.filter(item => item.id !== stage.id).map(item => new Option(item.nome,item.id)));
+    $('#stage-delete-info').textContent = stages.length <= 1 ? 'Mantenha ao menos uma etapa. Crie outra antes de excluir esta.' : 'Ao excluir, todos os chamados desta etapa serão movidos para a etapa escolhida abaixo.';
+  }
   stageDialog.showModal();
   stageForm.elements.nome.focus();
-};
+}
+$('#stage-new').onclick = () => openStage();
 $('#stage-cancel').onclick = () => { if (!creatingStage) stageDialog.close(); };
 stageDialog.addEventListener('cancel',event => { if (creatingStage) event.preventDefault(); });
+function stageBusy(value) {
+  creatingStage = value;
+  $('#stage-create').disabled = $('#stage-cancel').disabled = value;
+  $('#stage-delete').disabled = value || stages.length <= 1;
+}
 stageForm.onsubmit = async event => {
   event.preventDefault();
   if (creatingStage) return;
   const nome = stageForm.elements.nome.value.replace(/\s+/g,' ').trim();
   if (!nome || nome.length > 60) { $('#stage-error').textContent = 'Informe um nome de até 60 caracteres.'; return; }
-  if (stages.some(stage => stage.nome.toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'))) {
+  if (stages.some(stage => stage.id !== editingStage?.id && stage.nome.toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR'))) {
     $('#stage-error').textContent = 'Já existe uma etapa com esse nome.'; return;
   }
-  creatingStage = true;
-  $('#stage-create').disabled = $('#stage-cancel').disabled = true;
+  stageBusy(true);
   $('#stage-error').textContent = '';
   try {
-    await cloud.createStage({nome,cor:stageForm.elements.cor.value});
+    const data = {nome,cor:stageForm.elements.cor.value};
+    if (editingStage) await cloud.updateStage(editingStage.id,data);
+    else await cloud.createStage(data);
     await refresh();
     stageDialog.close();
-    $('#board-message').textContent = 'Etapa criada. Selecione essa etapa no card para mover o chamado.';
-    $('#columns').scrollLeft = $('#columns').scrollWidth;
+    $('#board-message').textContent = editingStage ? 'Etapa atualizada.' : 'Etapa criada. Selecione essa etapa no card para mover o chamado.';
   } catch (error) {
-    $('#stage-error').textContent = error.code === '23505' ? 'Já existe uma etapa com esse nome.' : 'Não foi possível criar a etapa. Recarregue a página para conferir antes de tentar novamente.';
-  } finally {
-    creatingStage = false;
-    $('#stage-create').disabled = $('#stage-cancel').disabled = false;
-  }
+    $('#stage-error').textContent = error.code === '23505' ? 'Já existe uma etapa com esse nome.' : 'Não foi possível salvar a etapa. Recarregue a página para conferir antes de tentar novamente.';
+  } finally { stageBusy(false); }
 };
+$('#stage-delete').onclick = async () => {
+  if (creatingStage || !editingStage || stages.length <= 1) return;
+  stageBusy(true);
+  $('#stage-error').textContent = '';
+  try {
+    await cloud.deleteStage(editingStage.id,$('#stage-destination').value);
+    await refresh();
+    stageDialog.close();
+    $('#board-message').textContent = 'Etapa excluída. Os chamados foram preservados na etapa de destino.';
+  } catch { $('#stage-error').textContent = 'Não foi possível excluir. Atualize a página e confira as etapas antes de tentar novamente.'; }
+  finally { stageBusy(false); }
+};
+
+const reasonDialog = $('#reason-dialog'), reasonForm = $('#reason-form');
+let reasonRecord, savingReason = false;
+function openReason(record) {
+  reasonRecord = record;
+  reasonForm.elements.motivo.value = record.problema || record.crmSituacao || '';
+  $('#reason-error').textContent = '';
+  reasonDialog.showModal();
+  reasonForm.elements.motivo.focus();
+}
+$('#reason-cancel').onclick = () => { if (!savingReason) reasonDialog.close(); };
+reasonDialog.addEventListener('cancel',event => { if (savingReason) event.preventDefault(); });
+reasonForm.onsubmit = async event => {
+  event.preventDefault();
+  if (savingReason || !reasonRecord) return;
+  const problema = reasonForm.elements.motivo.value.trim();
+  if (!problema || problema.length > 120) { $('#reason-error').textContent = 'Informe um motivo de até 120 caracteres.'; return; }
+  savingReason = true;
+  $('#reason-save').disabled = $('#reason-cancel').disabled = true;
+  try {
+    await cloud.save({...reasonRecord,problema,history:[...(reasonRecord.history ?? []),{at:Date.now(),text:'Motivo alterado para '+problema+'.'}]},reasonRecord);
+    await refresh();
+    reasonDialog.close();
+    $('#board-message').textContent = 'Motivo atualizado.';
+  } catch { $('#reason-error').textContent = 'Não foi possível salvar. Atualize a página antes de tentar novamente.'; }
+  finally { savingReason = false; $('#reason-save').disabled = $('#reason-cancel').disabled = false; }
+};
+
+function enableTouchDrag(handle,card,record,board) {
+  let pointer = null, destination = null;
+  const clear = () => {
+    pointer = null;
+    card.classList.remove('dragging');
+    board.querySelectorAll('.drop-target').forEach(column => column.classList.remove('drop-target'));
+  };
+  handle.addEventListener('pointerdown',event => {
+    if (event.pointerType === 'mouse' || movingCard || event.isPrimary === false) return;
+    event.preventDefault();
+    pointer = event.pointerId;
+    destination = null;
+    handle.setPointerCapture(pointer);
+    card.classList.add('dragging');
+  });
+  handle.addEventListener('pointermove',event => {
+    if (event.pointerId !== pointer) return;
+    event.preventDefault();
+    board.querySelectorAll('.drop-target').forEach(column => column.classList.remove('drop-target'));
+    const column = document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-stage-id]');
+    destination = column?.dataset.stageId ?? null;
+    column?.classList.add('drop-target');
+    if (event.clientY > innerHeight-70) window.scrollBy(0,18);
+    if (event.clientY < 70) window.scrollBy(0,-18);
+    const bounds = board.getBoundingClientRect();
+    if (event.clientX > bounds.right-60) board.scrollLeft += 18;
+    if (event.clientX < bounds.left+60) board.scrollLeft -= 18;
+  });
+  handle.addEventListener('pointerup',event => {
+    if (event.pointerId !== pointer) return;
+    const next = destination;
+    clear();
+    if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+    if (next && next !== record.status) moveCard(record,next);
+  });
+  handle.addEventListener('pointercancel',clear);
+}

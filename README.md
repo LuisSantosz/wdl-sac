@@ -32,4 +32,14 @@ A interface roda como um Static Site no Render. O Supabase guarda as solicitaç�
 
 Execute `supabase-etapas.sql` uma vez em instalações existentes, após `supabase-acompanhamento.sql`. A migração cria as etapas compartilhadas com acesso restrito à equipe e atualiza o portal do cliente.
 
-No painel, clique em **＋ Nova etapa**, informe um nome e escolha uma cor. A nova coluna aparece antes de **Finalizado**. Para mover um chamado, use a seleção de etapa no próprio card ou no formulário da solicitação. As três etapas originais continuam disponíveis. Nomes repetidos são bloqueados; a importação do CRM preserva a etapa escolhida. O cliente também vê o nome da etapa atual no link de acompanhamento.
+No painel, clique em **＋ Nova etapa**, informe um nome e escolha uma cor. A nova coluna aparece antes de **Finalizado**. Para mover um chamado, use a seleção de etapa no próprio card ou no formulário da solicitação. Todas as etapas, incluindo as originais, podem ser renomeadas ou excluídas; mantenha ao menos uma etapa. Nomes repetidos são bloqueados; a importação do CRM preserva a etapa escolhida. O cliente também vê o nome da etapa atual no link de acompanhamento.
+
+### Edição, exclusão e movimentação
+
+Após a migração anterior, execute `supabase-editar-etapas.sql`. Ela cadastra as etapas originais na configuração compartilhada, mantém os chamados existentes e adiciona uma referência que impede salvar chamados em etapas inexistentes.
+
+- Clique no lápis do cabeçalho da coluna para alterar nome e cor.
+- Para excluir uma etapa, escolha a coluna de destino. A operação move os chamados, registra a alteração no histórico e só então exclui a etapa, em uma única transação.
+- Clique no motivo exibido no card (por exemplo, **Defeito**) para editá-lo. Também é possível escrever um motivo livre no formulário. A descrição original do CRM continua disponível para consulta; a reimportação preserva o motivo editado.
+- Arraste o card para outra coluna com o mouse. Em telas sensíveis ao toque, use a área **Arrastar chamado**. A seleção de etapa permanece disponível para navegação por teclado.
+- Se **Em aberto** for excluída, os próximos chamados importados entram na primeira etapa disponível.

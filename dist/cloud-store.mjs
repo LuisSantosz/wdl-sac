@@ -44,7 +44,13 @@ export function connect(config) {
       }
     },
     async listStages() {
-      return result(await client.from('sac_etapas').select('id,nome,cor').order('criada_em').order('id'));
+      return result(await client.from('sac_etapas').select('id,nome,cor,ordem').order('ordem').order('criada_em').order('id'));
+    },
+    async updateStage(id,stage) {
+      return result(await client.from('sac_etapas').update(stage).eq('id',id).select('id').single());
+    },
+    async deleteStage(id,destination) {
+      return result(await client.rpc('sac_excluir_etapa',{p_etapa:id,p_destino:destination}));
     },
     async createStage(stage) {
       return result(await client.from('sac_etapas').insert(stage).select('id').single());
