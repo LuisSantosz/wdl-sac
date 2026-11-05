@@ -1,3 +1,4 @@
+import {saoPauloToday,validDate,displayDate,deadlineInfo,reorderStages} from './case-utils.mjs';
 import {buildStages,baseStages} from './stages.mjs';
 import {readCrm,whatsappContacts,whatsappUrl} from './crm.mjs';
 import {showMessages} from './portal-messages.mjs';
@@ -8,7 +9,7 @@ const $ = selector => document.querySelector(selector);
 let stages = buildStages(baseStages);
 let statuses = Object.fromEntries(stages.map(stage => [stage.id,stage.nome]));
 const editor = $('#editor'), form = $('#form'), whole = $('#whole'), pdf = $('#pdf');
-const fields = ['cliente','vendedor','nf','pedido','data','endereco','problema','descricao','status','novaNF','rastreio','transportadora','entrega','contato'];
+const fields = ['cliente','vendedor','nf','pedido','data','endereco','problema','descricao','status','novaNF','rastreio','transportadora','entrega','contato','proximaAcaoData','proximaAcao'];
 let cloud;
 function el(tag, className, content) {
   const node = document.createElement(tag);
@@ -17,8 +18,11 @@ function el(tag, className, content) {
   return node;
 }
 let records = [], current, attachment, uploadRun = 0, reading = false, saving = false;
-let activeStage = 'total';
+let boardToday = saoPauloToday();
+let activeStage = 'total', listStage = 'total', viewMode = 'kanban', dueFilter = 'all';
+try {viewMode = localStorage.getItem('wdl-sac-view') === 'list' ? 'list' : 'kanban';} catch {}
 function render() {
+  boardToday = saoPauloToday();
   const query = $('#search').value.trim().toLocaleLowerCase('pt-BR');
   const metrics = $('#metrics'), board = $('#columns');
   const scrollPositions = new Map([...board.querySelectorAll('.column')].map(column => [column.dataset.stageId,column.querySelector('.column-cards')?.scrollTop ?? 0]));
@@ -40,7 +44,8 @@ function render() {
     metrics.append(metric);
     if (key === 'total') continue;
     const group = el('section','column '+cor), heading = el('h3','column-head');
-    const list = records.filter(record => record.status === key && [record.crmCodigo,record.cliente,record.contato,record.vendedor,record.nf].some(value => String(value ?? '').toLocaleLowerCase('pt-BR').includes(query)));
+    const list = filteredRecords(query).filter(record => record.status === key);
+    enableStageDrag(group,heading,stage);
     group.dataset.stageId = key;
     group.tabIndex = -1;
     group.setAttribute('aria-label',label);
@@ -52,6 +57,14 @@ function render() {
     editStage.onclick = () => openStage(stage);
     heading.append(editStage);
     group.addEventListener('dragover',event => {
+      if (draggedStage) {
+        event.preventDefault();
+        group.classList.add('stage-drop-target');
+        const bounds = board.getBoundingClientRect();
+        if (event.clientX > bounds.right-70) board.scrollLeft += 18;
+        if (event.clientX < bounds.left+70) board.scrollLeft -= 18;
+        return;
+      }
       if (!draggedId || movingCard) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = 'move';
@@ -61,9 +74,11 @@ function render() {
       if (event.clientX > boardRect.right-70) board.scrollLeft += 18;
       if (event.clientX < boardRect.left+70) board.scrollLeft -= 18;
     });
-    group.addEventListener('dragleave',event => { if (!group.contains(event.relatedTarget)) group.classList.remove('drop-target'); });
+    group.addEventListener('dragleave',event => { if (!group.contains(event.relatedTarget)) group.classList.remove('drop-target','stage-drop-target'); });
     group.addEventListener('drop',event => {
       event.preventDefault();
+      group.classList.remove('stage-drop-target');
+      if (draggedStage) { const source = draggedStage; draggedStage = null; saveStageOrder(source,key); return; }
       group.classList.remove('drop-target');
       const record = records.find(record => record.id === draggedId);
       draggedId = null;
@@ -83,7 +98,7 @@ function render() {
       details.append(el('span','crm-code',record.crmCodigo ? 'SAC #'+record.crmCodigo : record.nf ? 'NF '+record.nf : 'SAC #'+record.id.slice(-8).toUpperCase()),el('strong','',record.cliente));
       const description = String(record.descricao || record.crmObservacao || '').replace(/\s+/g,' ').trim();
       if (description) details.append(el('p','card-description',description.length > 240 ? description.slice(0,237)+'…' : description));
-      if (record.crmCriacao) details.append(el('small','', 'Criado em '+record.crmCriacao));
+
       details.addEventListener('click',() => open(record));
       const reason = el('button','tag reason-edit',record.problema || record.crmSituacao || 'A classificar');
       reason.type = 'button';
@@ -113,11 +128,17 @@ function render() {
       process.onchange = () => changeProcess(record,process);
       const contacts = el('div','card-contacts');
       fillWhatsApp(contacts,record);
-      card.append(drag,details,reason,contacts,process);
+      const owner = el('small','card-owner','Atendimento: você');
+      const deadline = deadlineButton(record);
+      const state = deadlineInfo(record,boardToday);
+      card.classList.toggle('overdue',state.kind === 'late');
+      card.append(details,reason,owner,deadline,contacts,process,drag);
       cardList.append(card);
     }
     board.append(group);
   }
+  renderCaseList(query);
+  applyView();
   requestAnimationFrame(() => { updateCardViewports(); updateBoardNavigation(); });
 }
 function addItem(name = '', selected = false) {
@@ -148,6 +169,7 @@ function open(record) {
   current = record;
   attachment = record?.pdf;
   form.reset();
+  form.elements.proximaAcaoFeita.checked = Boolean(record?.proximaAcaoFeita);
   form.elements.status.replaceChildren(...stages.map(stage => new Option(stage.nome,stage.id)));
   $('#items').replaceChildren();
   $('#history').replaceChildren();
@@ -331,10 +353,13 @@ form.onsubmit = async event => {
   if (!Object.hasOwn(statuses,data.status)) { error.textContent = 'Crie ou selecione uma etapa válida antes de salvar.'; return; }
   if (!data.cliente) { error.textContent = 'Informe o nome do cliente.'; return; }
   if (!whole.checked && !items.some(item => item.selected)) { error.textContent = 'Selecione ao menos um item afetado ou marque a NF inteira.'; return; }
+  if (data.proximaAcaoData && !validDate(data.proximaAcaoData)) { error.textContent = 'Informe uma data válida para a próxima ação.'; return; }
+  data.proximaAcaoFeita = form.elements.proximaAcaoFeita.checked;
   const at = Date.now();
   const changes = [];
   if (!current) changes.push('Solicitação cadastrada.');
   else {
+    if (current.proximaAcaoData !== data.proximaAcaoData || current.proximaAcao !== data.proximaAcao || Boolean(current.proximaAcaoFeita) !== data.proximaAcaoFeita) changes.push('Próxima ação: '+(data.proximaAcao || 'Retorno')+' · '+(displayDate(data.proximaAcaoData) || 'Sem prazo')+(data.proximaAcaoFeita ? ' · Concluída' : ''));
     if (current.problema !== data.problema) changes.push('Motivo alterado para '+data.problema+'.');
     if (current.status !== data.status) changes.push('Status alterado para '+statuses[data.status]+'.');
     for (const [field,label] of [['novaNF','Nova NF'],['rastreio','Rastreio'],['transportadora','Transportadora'],['entrega','Data de entrega']]) {
@@ -374,7 +399,6 @@ async function refresh() {
   records = cases.sort((a,b) => b.createdAt - a.createdAt);
   render();
 }
-render();
 {
   const login = $('#login-dialog'), loginForm = $('#login-form'), error = $('#login-error');
   const dashboard = $('main');
@@ -736,6 +760,7 @@ function scrollBoard(left) {
   requestAnimationFrame(updateBoardNavigation);
 }
 function navigateStage(key) {
+  if (viewMode === 'list') {listStage = key;activeStage = key;render();return;}
   const column = [...boardColumns.children].find(column => column.dataset.stageId === key);
   activeStage = key;
   if (key === 'total') {
@@ -766,6 +791,7 @@ window.addEventListener('resize',() => {updateCardViewports();updateBoardNavigat
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => {updateCardViewports();updateBoardNavigation();}).observe(boardColumns);
 
 function updateCardViewports() {
+  if (boardColumns.hidden) return;
   boardColumns.querySelectorAll('.column-cards').forEach(list => {
     const cards = [...list.querySelectorAll('.card')].slice(0,3);
     if (!cards.length) { list.style.maxHeight = ''; return; }
@@ -787,3 +813,127 @@ function scrollCardList(column,y) {
   if (y > bounds.bottom-48) list.scrollTop += 16;
   if (y < bounds.top+48) list.scrollTop -= 16;
 }
+
+function filteredRecords(query = $('#search').value.trim().toLocaleLowerCase('pt-BR')) {
+  return records.filter(record => {
+    const match = [record.crmCodigo,record.cliente,record.contato,record.vendedor,record.nf,record.descricao,record.crmObservacao,record.problema,record.proximaAcao].some(value => String(value ?? '').toLocaleLowerCase('pt-BR').includes(query));
+    const kind = deadlineInfo(record,boardToday).kind;
+    return match && (dueFilter === 'all' || kind === dueFilter);
+  });
+}
+function deadlineButton(record) {
+  const info = deadlineInfo(record,boardToday);
+  const button = el('button','deadline deadline-'+info.kind);
+  button.type = 'button';
+  button.append(el('span','',info.label));
+  if (record.proximaAcao) button.append(el('small','',record.proximaAcao));
+  button.setAttribute('aria-label','Editar próxima ação de '+record.cliente);
+  button.onclick = () => openDeadline(record);
+  return button;
+}
+function stageSelect(record) {
+  const select = el('select','list-status');
+  select.setAttribute('aria-label','Etapa do chamado '+(record.crmCodigo || record.id));
+  for (const stage of stages) select.add(new Option(stage.nome,stage.id));
+  select.value = record.status;
+  select.onchange = () => changeProcess(record,select);
+  return select;
+}
+function renderCaseList(query) {
+  const target = $('#case-list-body');
+  target.replaceChildren();
+  if (!stages.some(stage => stage.id === listStage)) listStage = 'total';
+  const stageFilter = $('#list-stage');
+  stageFilter.replaceChildren(new Option('Todas as etapas','total'),...stages.map(stage => new Option(stage.nome,stage.id)));
+  stageFilter.value = listStage;
+  let items = filteredRecords(query).filter(record => listStage === 'total' || record.status === listStage);
+  if ($('#list-sort').value === 'deadline') items.sort((a,b) => {
+    const active = record => ['late','today','scheduled'].includes(deadlineInfo(record,boardToday).kind) ? record.proximaAcaoData : '9999-12-31';
+    return active(a).localeCompare(active(b)) || a.createdAt-b.createdAt;
+  });
+  $('#list-count').textContent = items.length+' chamados';
+  $('#due-summary').textContent = records.filter(record => deadlineInfo(record,boardToday).kind === 'late').length+' retornos atrasados';
+  for (const record of items) {
+    const row = el('tr',deadlineInfo(record,boardToday).kind === 'late' ? 'overdue-row' : '');
+    const client = el('td');
+    const button = el('button','list-open');button.type='button';
+    button.append(el('strong','',record.crmCodigo ? '#'+record.crmCodigo : record.nf || record.id.slice(-8)),el('span','',record.cliente));
+    button.onclick = () => open(record);client.append(button);
+    const description = String(record.descricao || record.crmObservacao || 'Sem descrição').replace(/\s+/g,' ').trim();
+    const descriptionCell = el('td');descriptionCell.append(el('p','list-description',description));
+    const reasonCell = el('td');const reason = el('button','list-reason',record.problema || record.crmSituacao || 'A classificar');reason.type='button';reason.onclick=()=>openReason(record);reasonCell.append(reason);
+    const status = el('td');status.append(stageSelect(record));
+    const deadline = el('td');deadline.append(deadlineButton(record));
+    const contact = el('td');fillWhatsApp(contact,record);
+    row.append(client,descriptionCell,reasonCell,status,deadline,contact);target.append(row);
+  }
+  if (!items.length) {const row=el('tr'),cell=el('td','empty','Nenhum chamado encontrado.');cell.colSpan=6;row.append(cell);target.append(row);}
+}
+function applyView() {
+  const list = viewMode === 'list';
+  $('#case-list').hidden = !list;$('#columns').hidden = list;$('.board-navigation').hidden = list;
+  $('#view-kanban').setAttribute('aria-pressed',String(!list));$('#view-list').setAttribute('aria-pressed',String(list));
+}
+for (const [id,value] of [['#view-kanban','kanban'],['#view-list','list']]) $(id).onclick = () => {
+  viewMode=value;try {localStorage.setItem('wdl-sac-view',value);} catch {}render();
+};
+$('#due-filter').onchange=event=>{dueFilter=event.target.value;render();};
+$('#list-stage').onchange=event=>{listStage=event.target.value;activeStage=listStage;render();};
+$('#list-sort').onchange=()=>render();
+
+const deadlineDialog=$('#deadline-dialog'),deadlineForm=$('#deadline-form');
+let deadlineRecord,savingDeadline=false;
+function openDeadline(record) {
+  deadlineRecord=record;deadlineForm.reset();
+  deadlineForm.elements.data.value=record.proximaAcaoData || '';
+  deadlineForm.elements.acao.value=record.proximaAcao || '';
+  deadlineForm.elements.feita.checked=Boolean(record.proximaAcaoFeita);
+  $('#deadline-error').textContent='';deadlineDialog.showModal();
+}
+$('#deadline-cancel').onclick=()=>{if(!savingDeadline)deadlineDialog.close();};
+deadlineDialog.addEventListener('cancel',event=>{if(savingDeadline)event.preventDefault();});
+deadlineForm.onsubmit=async event=>{
+  event.preventDefault();if(savingDeadline || !deadlineRecord)return;
+  const date=deadlineForm.elements.data.value,action=deadlineForm.elements.acao.value.trim(),done=deadlineForm.elements.feita.checked;
+  if(date && !validDate(date)){$('#deadline-error').textContent='Informe uma data válida.';return;}
+  savingDeadline=true;$('#deadline-save').disabled=$('#deadline-cancel').disabled=true;
+  try{
+    await cloud.save({...deadlineRecord,proximaAcaoData:date,proximaAcao:action,proximaAcaoFeita:done,history:[...(deadlineRecord.history ?? []),{at:Date.now(),text:'Próxima ação: '+(action || 'Retorno')+' · '+(displayDate(date) || 'Sem prazo')+(done ? ' · Concluída' : '')}]},deadlineRecord);
+    await refresh();deadlineDialog.close();$('#board-message').textContent='Próxima ação atualizada.';
+  }catch{$('#deadline-error').textContent='Não foi possível salvar. Recarregue antes de tentar novamente.';}
+  finally{savingDeadline=false;$('#deadline-save').disabled=$('#deadline-cancel').disabled=false;}
+};
+let lastCalendarDay=saoPauloToday();
+setInterval(()=>{const today=saoPauloToday();if(today!==lastCalendarDay){lastCalendarDay=today;render();}},60000);
+
+let draggedStage=null,reorderingStages=false;
+function enableStageDrag(column,heading,stage) {
+  heading.draggable=true;
+  heading.title='Arraste para reordenar a etapa';
+  heading.addEventListener('dragstart',event=>{
+    if(reorderingStages || event.target.closest('button')){event.preventDefault();return;}
+    event.stopPropagation();draggedStage=stage.id;event.dataTransfer.setData('text/plain',stage.id);event.dataTransfer.effectAllowed='move';column.classList.add('stage-dragging');
+  });
+  heading.addEventListener('dragend',()=>{draggedStage=null;column.classList.remove('stage-dragging');document.querySelectorAll('.stage-drop-target').forEach(node=>node.classList.remove('stage-drop-target'));});
+  const left=el('button','stage-order','‹'),right=el('button','stage-order','›');
+  left.type=right.type='button';left.setAttribute('aria-label','Mover etapa '+stage.nome+' para a esquerda');right.setAttribute('aria-label','Mover etapa '+stage.nome+' para a direita');
+  const index=stages.findIndex(item=>item.id===stage.id);left.disabled=index===0;right.disabled=index===stages.length-1;
+  left.onclick=()=>saveStageOrder(stage.id,stages[index-1]?.id);
+  right.onclick=()=>{const ids=stages.map(item=>item.id);[ids[index],ids[index+1]]=[ids[index+1],ids[index]];persistStageOrder(ids);};
+  heading.append(left,right);
+}
+async function saveStageOrder(source,target) {
+  if(!target || source===target)return;
+  await persistStageOrder(reorderStages(stages,source,target));
+}
+async function persistStageOrder(ids) {
+  if(reorderingStages)return;reorderingStages=true;$('#board-message').textContent='Salvando ordem das etapas…';
+  try{await cloud.reorderStages(ids,stages.map(stage=>stage.id));await refresh();$('#board-message').textContent='Ordem das etapas salva.';}
+  catch{$('#board-message').textContent='Não foi possível reordenar. Atualize a página antes de tentar novamente.';}
+  finally{reorderingStages=false;}
+}
+
+render();
+
+deadlineForm.elements.data.addEventListener('input',()=>{deadlineForm.elements.feita.checked=false;});
+form.elements.proximaAcaoData.addEventListener('input',()=>{form.elements.proximaAcaoFeita.checked=false;});

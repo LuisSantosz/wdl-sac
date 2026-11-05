@@ -43,3 +43,16 @@ Após a migração anterior, execute `supabase-editar-etapas.sql`. Ela cadastra 
 - Clique no motivo exibido no card (por exemplo, **Defeito**) para editá-lo. Também é possível escrever um motivo livre no formulário. A descrição original do CRM continua disponível para consulta; a reimportação preserva o motivo editado.
 - Arraste o card para outra coluna com o mouse. Em telas sensíveis ao toque, use a área **Arrastar chamado**. A seleção de etapa permanece disponível para navegação por teclado.
 - Se **Em aberto** for excluída, os próximos chamados importados entram na primeira etapa disponível.
+
+## Prazos, lista e organização individual
+
+Após as migrações anteriores, execute `supabase-reordenar-etapas.sql`. A gravação da ordem mantém as políticas RLS que restringem a edição aos usuários cadastrados em `equipe_sac`.
+
+- No card, clique em **Agendar próxima ação** para informar a data e o que fazer. Marque a ação como concluída depois do retorno. Alterar a data desmarca a conclusão.
+- Datas são avaliadas pelo calendário de São Paulo: o dia atual é **hoje** e dias anteriores são **atrasados**. O destaque é atualizado enquanto a página está aberta, inclusive na virada do dia. Esses prazos são internos; não geram mensagens externas automáticas.
+- Use os filtros de prazo no Kanban ou na **Lista**. A lista permite filtrar a etapa e ordenar pela próxima ação. A escolha Kanban/Lista fica salva no navegador.
+- Arraste o cabeçalho de uma coluna para outra posição para salvar a ordem. As pequenas setas do cabeçalho oferecem a mesma função por teclado ou toque.
+- Não há atribuição obrigatória de responsáveis: os cards identificam o atendimento individual como **você**.
+- Os dados da próxima ação são preservados na reimportação do CRM. Etapas e chamados existentes não recebem prazos presumidos a partir do nome das colunas.
+
+Validação das regras de prazo: `node --test tests/case-utils.test.mjs`.

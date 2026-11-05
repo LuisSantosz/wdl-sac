@@ -46,6 +46,9 @@ export function connect(config) {
     async listStages() {
       return result(await client.from('sac_etapas').select('id,nome,cor,ordem').order('ordem').order('criada_em').order('id'));
     },
+    async reorderStages(ids,expected) {
+      return result(await client.rpc('sac_reordenar_etapas',{p_ids:ids,p_esperado:expected}));
+    },
     async updateStage(id,stage) {
       return result(await client.from('sac_etapas').update(stage).eq('id',id).select('id').single());
     },
