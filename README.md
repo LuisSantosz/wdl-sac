@@ -56,3 +56,13 @@ Após as migrações anteriores, execute `supabase-reordenar-etapas.sql`. A grav
 - Os dados da próxima ação são preservados na reimportação do CRM. Etapas e chamados existentes não recebem prazos presumidos a partir do nome das colunas.
 
 Validação das regras de prazo: `node --test tests/case-utils.test.mjs`.
+
+## Importação do Excel e pesquisa
+
+O importador aceita `.xlsx`, a tabela HTML exportada pelo CRM com extensão `.xls` e arquivos `.htm`/`.html`. As colunas podem mudar de posição; são identificadas pelo cabeçalho. O leitor de Excel é carregado localmente apenas ao abrir `.xlsx`.
+
+Alguns arquivos `.xls` são apenas um **Excel Workbook Frameset**, sem células. Os dados ficam na pasta `<nome>_arquivos/sheet001.htm`. Nesse caso, selecione a pasta de apoio pelo botão exibido, selecione o `.xls` e o `.htm` juntos ou abra o documento completo no Excel e use **Salvar como → Pasta de Trabalho do Excel (.xlsx)**. Renomear a extensão não converte o arquivo. O sistema não busca nem executa referências externas contidas no documento. Arquivos binários `.xls` antigos precisam ser convertidos para `.xlsx`.
+
+A busca ignora acentos e mostra os resultados diretamente abaixo do campo, em todas as etapas, independentemente dos filtros ativos. Clique no resultado para abrir o chamado ou em **Ver resultados na lista** para consultar todos. Telefone, código, nome, NF, pedido, descrição, motivo, rastreio e transportadora são pesquisáveis.
+
+A identidade visual é definida por `dist/ios.css`; as cores e sua finalidade estão em `DESIGN.md`. O tema escuro mantém fundo preto.

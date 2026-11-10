@@ -6,3 +6,6 @@ dist/ocr/*.wasm*
 dist/ocr/tesseract.mjs
 dist/ocr/worker.min.js
 dist/ocr/lang/*.gz
+
+dist/exceljs.min.js
+dist/EXCELJS-LICENSE.txt

@@ -1,6 +1,8 @@
 import {copyFile, mkdir} from 'node:fs/promises';
 
 const assets = {
+  'exceljs/dist/exceljs.min.js': 'exceljs.min.js',
+  'exceljs/LICENSE': 'EXCELJS-LICENSE.txt',
   'pdfjs-dist/legacy/build/pdf.min.mjs': 'pdf.min.mjs',
   'pdfjs-dist/legacy/build/pdf.worker.min.mjs': 'pdf.worker.min.mjs',
   'tesseract.js/dist/tesseract.esm.min.js': 'ocr/tesseract.mjs',

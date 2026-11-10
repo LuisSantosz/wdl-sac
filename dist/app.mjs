@@ -1,6 +1,7 @@
+import {searchRecords} from './search.mjs';
 import {saoPauloToday,validDate,displayDate,deadlineInfo,reorderStages} from './case-utils.mjs';
 import {buildStages,baseStages} from './stages.mjs';
-import {readCrm,whatsappContacts,whatsappUrl} from './crm.mjs';
+import {readCrmSelection,whatsappContacts,whatsappUrl} from './crm.mjs';
 import {showMessages} from './portal-messages.mjs';
 import {cloudConfig} from './cloud-config.mjs';
 const useCloud = true;
@@ -137,6 +138,7 @@ function render() {
     }
     board.append(group);
   }
+  renderSearchResults(query);
   renderCaseList(query);
   applyView();
   requestAnimationFrame(() => { updateCardViewports(); updateBoardNavigation(); });
@@ -576,13 +578,13 @@ async function moveCard(record,next) {
 const crmDialog = $('#crm-dialog'), crmFile = $('#crm-file');
 let importCalls = [], importing = false;
 $('#crm-import').onclick = () => crmFile.click();
-crmFile.onchange = async () => {
-  const file = crmFile.files[0];
-  if (!file || importing) return;
+async function previewCrm(files) {
+  if (!files.length || importing) return;
   $('#crm-import').disabled = true;
   $('#board-message').textContent = 'Lendo exportação do CRM…';
   try {
-    importCalls = await readCrm(file);
+    $('#import-help').hidden = true;
+    importCalls = await readCrmSelection(files);
     const codes = new Set(records.map(record => record.crmCodigo));
     const existing = importCalls.filter(call => codes.has(call.crmCodigo)).length;
     $('#crm-summary').textContent = importCalls.length+' chamados encontrados · '+existing+' já cadastrados.';
@@ -594,11 +596,16 @@ crmFile.onchange = async () => {
     $('#board-message').textContent = '';
   } catch (error) {
     $('#board-message').textContent = error.message || 'Não foi possível ler a planilha.';
+    $('#import-help').hidden = error.code !== 'CRM_MISSING_SHEET';
   } finally {
     $('#crm-import').disabled = false;
     crmFile.value = '';
+    $('#crm-folder').value = '';
   }
-};
+}
+crmFile.onchange = () => previewCrm([...crmFile.files]);
+$('#crm-folder').onchange = () => previewCrm([...$('#crm-folder').files]);
+$('#crm-folder-button').onclick = () => $('#crm-folder').click();
 crmDialog.addEventListener('cancel',event => {if (importing) event.preventDefault();});
 $('#crm-cancel').onclick = () => {if (!importing) crmDialog.close();};
 $('#crm-confirm').onclick = async () => {
@@ -815,10 +822,9 @@ function scrollCardList(column,y) {
 }
 
 function filteredRecords(query = $('#search').value.trim().toLocaleLowerCase('pt-BR')) {
-  return records.filter(record => {
-    const match = [record.crmCodigo,record.cliente,record.contato,record.vendedor,record.nf,record.descricao,record.crmObservacao,record.problema,record.proximaAcao].some(value => String(value ?? '').toLocaleLowerCase('pt-BR').includes(query));
+  return searchRecords(records,query,stages).filter(record => {
     const kind = deadlineInfo(record,boardToday).kind;
-    return match && (dueFilter === 'all' || kind === dueFilter);
+    return dueFilter === 'all' || kind === dueFilter;
   });
 }
 function deadlineButton(record) {
@@ -937,3 +943,29 @@ render();
 
 deadlineForm.elements.data.addEventListener('input',()=>{deadlineForm.elements.feita.checked=false;});
 form.elements.proximaAcaoData.addEventListener('input',()=>{form.elements.proximaAcaoFeita.checked=false;});
+
+function renderSearchResults(query) {
+  const panel=$('#search-results'),list=$('#search-result-list');
+  list.replaceChildren();
+  if(!query.trim()){panel.hidden=true;return;}
+  const matches=searchRecords(records,query,stages);
+  $('#search-summary').textContent=matches.length ? matches.length+' '+(matches.length===1?'solicitação encontrada':'solicitações encontradas') : 'Nenhuma solicitação encontrada';
+  for(const record of matches.slice(0,20)) {
+    const item=el('li'),button=el('button','search-result');button.type='button';
+    button.append(el('strong','',record.crmCodigo?'SAC #'+record.crmCodigo:record.nf?'NF '+record.nf:'Solicitação'),el('span','',record.cliente));
+    const label=stages.find(stage=>stage.id===record.status)?.nome || 'Sem etapa';
+    button.append(el('small','',label+' · '+(record.problema || record.crmSituacao || 'A classificar')));
+    button.onclick=()=>{panel.hidden=true;open(record);};item.append(button);list.append(item);
+  }
+  $('#search-show-all').hidden=!matches.length;
+  $('#search-show-all').textContent=matches.length>20?'Ver todos os '+matches.length+' resultados na lista':'Ver resultados na lista';
+  panel.hidden=false;
+}
+search.onfocus=()=>{if(search.value.trim())renderSearchResults(search.value);};
+search.addEventListener('keydown',event=>{if(event.key==='Escape'){$('#search-results').hidden=true;event.stopPropagation();}});
+$('#search-show-all').onclick=()=>{
+  viewMode='list';dueFilter='all';listStage='total';activeStage='total';$('#due-filter').value='all';
+  try{localStorage.setItem('wdl-sac-view','list');}catch{}
+  render();$('#search-results').hidden=true;$('#case-list').scrollIntoView({block:'nearest',behavior:reducedMotion()?'instant':'smooth'});
+};
+document.addEventListener('click',event=>{if(!event.target.closest('.search-area'))$('#search-results').hidden=true;});
