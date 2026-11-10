@@ -1,18 +1,29 @@
-# WDL SAC — interface inspirada no iOS
+# WDL SAC — Workspace
 
-Superfícies agrupadas, cantos arredondados, tipografia do sistema, controles segmentados e barra superior translúcida. As cores indicam função; textos identificam os estados sem depender somente da cor.
+Painel de atendimento com navegação lateral, cabeçalho compacto, indicadores de próximos retornos e área de trabalho com Kanban e lista. A referência de organização é uma ferramenta de service management; o produto mantém marca e linguagem próprias.
 
-| Função | Claro | Escuro | Uso |
-| --- | --- | --- | --- |
-| Fundo | #F2F2F7 | #000000 | Área de trabalho |
-| Superfície | #FFFFFF | #1C1C1E | Cartões, diálogos e painéis |
-| Texto | #1C1C1E | #F5F5F7 | Conteúdo principal |
-| Texto secundário | #626773 | #A6A9B3 | Descrições, datas e orientações |
-| Azul | #0066CC | #78B6FF | Ações principais, foco, navegação e informação |
-| Vermelho | #BD2637 | #FF9DA8 | Atenção, chamados abertos e retornos atrasados |
-| Amarelo | #865300 | #F3CD73 | Em andamento e retorno no dia atual |
-| Verde | #237143 | #8ED6A1 | Conclusão e contato por WhatsApp |
-| Roxo | #7442B0 | #CBA6FF | Opção para etapas específicas |
-| Laranja | #975000 | #FFC083 | Opção para etapas que demandam ação |
+## Identidade
 
-As etapas personalizadas preservam a cor escolhida pelo usuário. Botões de exclusão usam fundo vermelho com texto branco; no tema escuro, os demais botões principais usam fundo azul claro com texto azul profundo. Cores de status recebem fundos suaves definidos nos tokens `--rbg`, `--ybg`, `--gbg` e `--total-bg`. A busca usa o mesmo azul de foco dos demais campos.
+Índigo é a cor de ação e seleção. Cobre distingue a identidade da central e os chamados sem próxima ação. As superfícies neutras deixam conteúdo, prazos e estados em primeiro plano. Todos os controles executam funções existentes do SAC; os indicadores usam registros reais.
+
+| Função | Claro | Escuro |
+| --- | --- | --- |
+| Fundo | #F3F5FA | #000000 |
+| Superfície | #FFFFFF | #121722 |
+| Superfície secundária | #F7F8FC | #191F2D |
+| Texto principal | #20283B | #EEF1FA |
+| Texto secundário | #5B6476 | #B2BACE |
+| Ação e seleção | #5143D9 | #B0A7FF |
+| Identidade e próxima ação não definida | #A44716 | #FFB580 |
+| Atenção e atraso | #B72743 | #FFA3B6 |
+| Andamento e retorno de hoje | #8B5700 | #E9BD66 |
+| Conclusão e contato | #217449 | #90D7AE |
+| Navegação lateral | #172136 | #0E1420 |
+
+As etapas personalizadas continuam com as cores escolhidas pelo usuário. Os fundos de status são variações suaves das respectivas cores. Estados também têm rótulos escritos; a cor não é o único indicador.
+
+## Temas e acessibilidade
+
+Os temas mudam os tokens, sem trocar a hierarquia ou reduzir o tamanho/opacidade do texto. As combinações de texto com fundo principal, cartões, controles, navegação e avisos atingem pelo menos 4,5:1. Isso é validado automaticamente em `tests/panel-palette.test.mjs`. Estados desabilitados são apresentados separadamente. Foco de teclado é visível. No celular, o menu usa controle de foco, fundo de fechamento e tecla Escape.
+
+O fundo escuro é preto. A navegação lateral mantém sua identidade em ambos os temas, com contraste independente do tema da área de trabalho.

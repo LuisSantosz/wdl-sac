@@ -65,4 +65,10 @@ Alguns arquivos `.xls` são apenas um **Excel Workbook Frameset**, sem células.
 
 A busca ignora acentos e mostra os resultados diretamente abaixo do campo, em todas as etapas, independentemente dos filtros ativos. Clique no resultado para abrir o chamado ou em **Ver resultados na lista** para consultar todos. Telefone, código, nome, NF, pedido, descrição, motivo, rastreio e transportadora são pesquisáveis.
 
-A identidade visual é definida por `dist/ios.css`; as cores e sua finalidade estão em `DESIGN.md`. O tema escuro mantém fundo preto.
+A identidade visual atual do painel é definida por `dist/panel.css`, sobre os estilos estruturais anteriores; as cores e sua finalidade estão em `DESIGN.md`. O tema escuro mantém fundo preto.
+
+## Painel de atendimento
+
+A interface usa navegação lateral com atalhos reais para Kanban, lista, retornos de hoje, atrasados e importação. Os indicadores são derivados das solicitações cadastradas; chamados finalizados não entram em **Sem próxima ação**. A navegação lateral se transforma em menu recolhível no celular e pode ser fechada pelo fundo ou pela tecla Escape.
+
+Os dois temas preservam a estrutura, os tamanhos de texto e os significados de cores. As combinações de texto e fundos de estados são verificadas por `tests/panel-palette.test.mjs`, junto dos demais testes: `node --test tests/*.test.mjs`.

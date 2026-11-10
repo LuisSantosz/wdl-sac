@@ -138,6 +138,7 @@ function render() {
     }
     board.append(group);
   }
+  updateWorkspaceOverview();
   renderSearchResults(query);
   renderCaseList(query);
   applyView();
@@ -824,7 +825,7 @@ function scrollCardList(column,y) {
 function filteredRecords(query = $('#search').value.trim().toLocaleLowerCase('pt-BR')) {
   return searchRecords(records,query,stages).filter(record => {
     const kind = deadlineInfo(record,boardToday).kind;
-    return dueFilter === 'all' || kind === dueFilter;
+    return dueFilter === 'all' || (kind === dueFilter && !(dueFilter === 'none' && record.status === 'concluida'));
   });
 }
 function deadlineButton(record) {
@@ -969,3 +970,52 @@ $('#search-show-all').onclick=()=>{
   render();$('#search-results').hidden=true;$('#case-list').scrollIntoView({block:'nearest',behavior:reducedMotion()?'instant':'smooth'});
 };
 document.addEventListener('click',event=>{if(!event.target.closest('.search-area'))$('#search-results').hidden=true;});
+
+function updateWorkspaceOverview() {
+  const counts={late:0,today:0,none:0};
+  for(const record of records){
+    if(record.status==='concluida')continue;
+    const kind=deadlineInfo(record,boardToday).kind;
+    if(Object.hasOwn(counts,kind))counts[kind]++;
+  }
+  for(const kind of ['late','today']) {
+    $('#nav-'+kind+'-count').textContent=counts[kind];
+    $('#overview-'+kind+'-count').textContent=counts[kind];
+  }
+  $('#overview-unscheduled-count').textContent=counts.none;
+  const nav=dueFilter==='late'?'nav-late':dueFilter==='today'?'nav-today':viewMode==='list'?'nav-list':'nav-workspace';
+  for(const id of ['nav-workspace','nav-today','nav-late','nav-list']) {
+    if(id===nav)$('#'+id).setAttribute('aria-current','page');else $('#'+id).removeAttribute('aria-current');
+  }
+  $('#workspace-context').textContent=dueFilter==='late'?'Retornos atrasados':dueFilter==='today'?'Retornos de hoje':viewMode==='list'?'Todas as solicitações':'Painel de atendimento';
+}
+function workspaceRoute(mode,filter='all') {
+  viewMode=mode;dueFilter=filter;listStage='total';activeStage='total';
+  $('#due-filter').value=filter;search.value='';
+  try{localStorage.setItem('wdl-sac-view',mode);}catch{}
+  render();setSidebar(false);
+  $('#main-workspace').scrollIntoView({block:'start',behavior:reducedMotion()?'instant':'smooth'});
+}
+$('#nav-workspace').onclick=()=>workspaceRoute('kanban');
+$('#nav-list').onclick=()=>workspaceRoute('list');
+$('#nav-today').onclick=$('#overview-today').onclick=()=>workspaceRoute('list','today');
+$('#nav-late').onclick=$('#overview-late').onclick=()=>workspaceRoute('list','late');
+$('#overview-unscheduled').onclick=()=>workspaceRoute('list','none');
+$('#nav-import').onclick=()=>{setSidebar(false);$('#crm-import').click();};
+$('#nav-stage').onclick=()=>{setSidebar(false);$('#stage-new').click();};
+function setSidebar(open) {
+  const mobile=window.matchMedia('(max-width: 980px)').matches;
+  const wasOpen=document.body.classList.contains('sidebar-open');
+  document.body.classList.toggle('sidebar-open',open);
+  $('#sidebar-toggle').setAttribute('aria-expanded',String(open));
+  $('#sidebar-backdrop').hidden=!open;
+  $('#app-sidebar').toggleAttribute('inert',!open && mobile);
+  $('.app-frame').toggleAttribute('inert',open && mobile);
+  if(open && mobile)($('#app-sidebar [aria-current=page]') ?? $('#nav-workspace')).focus();
+  if(!open && wasOpen && mobile)$('#sidebar-toggle').focus();
+}
+$('#sidebar-toggle').onclick=()=>setSidebar(!document.body.classList.contains('sidebar-open'));
+$('#sidebar-backdrop').onclick=()=>setSidebar(false);
+document.addEventListener('keydown',event=>{if(event.key==='Escape' && document.body.classList.contains('sidebar-open'))setSidebar(false);});
+window.addEventListener('resize',()=>{if(window.innerWidth>980)setSidebar(false);else $('#app-sidebar').toggleAttribute('inert',!document.body.classList.contains('sidebar-open'));});
+setSidebar(false);
