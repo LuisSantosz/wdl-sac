@@ -72,3 +72,12 @@ A identidade visual atual do painel é definida por `dist/panel.css`, sobre os e
 A interface usa navegação lateral com atalhos reais para Kanban, lista, retornos de hoje, atrasados e importação. Os indicadores são derivados das solicitações cadastradas; chamados finalizados não entram em **Sem próxima ação**. A navegação lateral se transforma em menu recolhível no celular e pode ser fechada pelo fundo ou pela tecla Escape.
 
 Os dois temas preservam a estrutura, os tamanhos de texto e os significados de cores. As combinações de texto e fundos de estados são verificadas por `tests/panel-palette.test.mjs`, junto dos demais testes: `node --test tests/*.test.mjs`.
+
+
+## Recuperação de senha
+
+O login inclui **Esqueci minha senha**. O e-mail de recuperação volta à raiz do site; o evento verificado `PASSWORD_RECOVERY` abre o formulário de nova senha, antes de carregar chamados. URLs de erro exibem a opção de solicitar outro link. Uma sessão comum não habilita o formulário de redefinição.
+
+No Supabase, em **Authentication → URL Configuration**, configure **Site URL** como `https://wdl-sac.onrender.com/` e autorize esse mesmo endereço em **Redirect URLs**. O envio usa o serviço de e-mail configurado no Supabase, sujeito aos limites desse serviço. Não é necessário adicionar rota separada ou chave secreta. Links enviados pelo dashboard também devem retornar à raiz do site.
+
+Após publicar no Render, valide com uma conta de teste: solicitar link, abrir e-mail, confirmar nova senha, voltar ao login e entrar. Teste link expirado e senhas diferentes. A senha é enviada apenas à API Auth via HTTPS, sem gravação em logs ou no código. O cliente encerra a sessão local ao retornar ao login. As permissões e políticas do banco permanecem inalteradas.

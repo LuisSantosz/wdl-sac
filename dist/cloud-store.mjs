@@ -22,10 +22,17 @@ export function connect(config) {
       client.auth.onAuthStateChange((_event,session) => {
         const user = session?.user ?? null;
         const id = user?.id ?? null;
-        if (id === previousUser) return;
+        if (id === previousUser && _event !== 'PASSWORD_RECOVERY') return;
         previousUser = id;
-        setTimeout(() => callback(user),0);
+        setTimeout(() => callback(user,_event),0);
       });
+    },
+    requestPasswordReset:async email => result(await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/'})),
+    async updatePassword(password) {
+      const {data:{user},error} = await client.auth.getUser();
+      if (error) throw error;
+      if (!user) throw Object.assign(new Error('Sessão expirada.'),{code:'session_not_found'});
+      return result(await client.auth.updateUser({password}));
     },
     login:async (email,password) => result(await client.auth.signInWithPassword({email,password})),
     logout:async () => result(await client.auth.signOut({scope:'local'})),

@@ -1,3 +1,4 @@
+import {setupPasswordRecovery} from './password-recovery.mjs';
 import {searchRecords} from './search.mjs';
 import {saoPauloToday,validDate,displayDate,deadlineInfo,reorderStages} from './case-utils.mjs';
 import {buildStages,baseStages} from './stages.mjs';
@@ -408,6 +409,7 @@ async function refresh() {
   dashboard.hidden = true;
   login.addEventListener('cancel',event => event.preventDefault());
   login.showModal();
+  const recovery = setupPasswordRecovery(() => cloud);
   if (!cloudConfig.url || !cloudConfig.publishableKey) {
     $('#login-submit').disabled = true;
     error.textContent = 'Configure a URL e a chave pública do Supabase para usar o SAC.';
@@ -426,7 +428,10 @@ async function refresh() {
   };
   if (cloudConfig.url && cloudConfig.publishableKey) import('./cloud-store.mjs').then(({connect}) => {
     cloud = connect(cloudConfig);
-    cloud.observe(async user => {
+    cloud.observe(async (user,event) => {
+      if (recovery.handleAuth(user,event)) {
+        dashboard.hidden = true; $('#logout').hidden = true; records = []; render(); return;
+      }
       dashboard.hidden = true;
       $('#logout').hidden = true;
       records = [];
