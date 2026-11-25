@@ -1,3 +1,4 @@
+import {problemPicker} from './problem-picker.mjs';
 import {setupPasswordRecovery} from './password-recovery.mjs';
 import {searchRecords} from './search.mjs';
 import {saoPauloToday,validDate,displayDate,deadlineInfo,reorderStages} from './case-utils.mjs';
@@ -11,6 +12,7 @@ const $ = selector => document.querySelector(selector);
 let stages = buildStages(baseStages);
 let statuses = Object.fromEntries(stages.map(stage => [stage.id,stage.nome]));
 const editor = $('#editor'), form = $('#form'), whole = $('#whole'), pdf = $('#pdf');
+const problemControl = problemPicker(form.elements.problema);
 const fields = ['cliente','vendedor','nf','pedido','data','endereco','problema','descricao','status','novaNF','rastreio','transportadora','entrega','contato','proximaAcaoData','proximaAcao'];
 let cloud;
 function el(tag, className, content) {
@@ -196,6 +198,7 @@ function open(record) {
       $('#history').append(el('li','',new Date(entry.at).toLocaleString('pt-BR')+' · '+entry.text));
     }
   }
+  problemControl.set(form.elements.problema.value);
   setPdfInfo(attachment?.name ?? record?.pdfName ?? '');
   editor.showModal();
   $('.form-body').scrollTop = 0;
@@ -696,13 +699,14 @@ $('#stage-delete').onclick = async () => {
 };
 
 const reasonDialog = $('#reason-dialog'), reasonForm = $('#reason-form');
+const reasonControl = problemPicker(reasonForm.elements.motivo);
 let reasonRecord, savingReason = false;
 function openReason(record) {
   reasonRecord = record;
-  reasonForm.elements.motivo.value = record.problema || record.crmSituacao || '';
+  reasonControl.set(record.problema || record.crmSituacao || '');
   $('#reason-error').textContent = '';
   reasonDialog.showModal();
-  reasonForm.elements.motivo.focus();
+  reasonControl.focus();
 }
 $('#reason-cancel').onclick = () => { if (!savingReason) reasonDialog.close(); };
 reasonDialog.addEventListener('cancel',event => { if (savingReason) event.preventDefault(); });
@@ -1008,19 +1012,44 @@ $('#nav-late').onclick=$('#overview-late').onclick=()=>workspaceRoute('list','la
 $('#overview-unscheduled').onclick=()=>workspaceRoute('list','none');
 $('#nav-import').onclick=()=>{setSidebar(false);$('#crm-import').click();};
 $('#nav-stage').onclick=()=>{setSidebar(false);$('#stage-new').click();};
+let sidebarCollapsed = false;
+try { sidebarCollapsed = localStorage.getItem('wdl-sac-sidebar-collapsed') === 'true'; } catch {}
+for (const button of document.querySelectorAll('.workspace-nav button')) {
+  const label = button.querySelector('span')?.textContent || '';
+  button.setAttribute('aria-label',label);
+  button.title = label;
+}
+function syncSidebarToggle() {
+  const mobile = window.matchMedia('(max-width: 980px)').matches;
+  const expanded = mobile ? document.body.classList.contains('sidebar-open') : !sidebarCollapsed;
+  const button = $('#sidebar-toggle');
+  button.setAttribute('aria-expanded',String(expanded));
+  button.setAttribute('aria-label',expanded ? (mobile ? 'Fechar navegação' : 'Recolher barra lateral') : 'Expandir barra lateral');
+  button.title = button.getAttribute('aria-label');
+  document.body.classList.toggle('sidebar-collapsed',sidebarCollapsed);
+}
 function setSidebar(open) {
   const mobile=window.matchMedia('(max-width: 980px)').matches;
   const wasOpen=document.body.classList.contains('sidebar-open');
+  open = open && mobile;
   document.body.classList.toggle('sidebar-open',open);
-  $('#sidebar-toggle').setAttribute('aria-expanded',String(open));
   $('#sidebar-backdrop').hidden=!open;
   $('#app-sidebar').toggleAttribute('inert',!open && mobile);
   $('.app-frame').toggleAttribute('inert',open && mobile);
-  if(open && mobile)($('#app-sidebar [aria-current=page]') ?? $('#nav-workspace')).focus();
+  syncSidebarToggle();
+  if(open)($('#app-sidebar [aria-current=page]') ?? $('#nav-workspace')).focus();
   if(!open && wasOpen && mobile)$('#sidebar-toggle').focus();
 }
-$('#sidebar-toggle').onclick=()=>setSidebar(!document.body.classList.contains('sidebar-open'));
+$('#sidebar-toggle').onclick=()=>{
+  if (window.matchMedia('(max-width: 980px)').matches) setSidebar(!document.body.classList.contains('sidebar-open'));
+  else {
+    sidebarCollapsed = !sidebarCollapsed;
+    try { localStorage.setItem('wdl-sac-sidebar-collapsed',String(sidebarCollapsed)); } catch {}
+    syncSidebarToggle();
+    requestAnimationFrame(()=>{updateCardViewports();updateBoardNavigation();});
+  }
+};
 $('#sidebar-backdrop').onclick=()=>setSidebar(false);
 document.addEventListener('keydown',event=>{if(event.key==='Escape' && document.body.classList.contains('sidebar-open'))setSidebar(false);});
-window.addEventListener('resize',()=>{if(window.innerWidth>980)setSidebar(false);else $('#app-sidebar').toggleAttribute('inert',!document.body.classList.contains('sidebar-open'));});
+window.addEventListener('resize',()=>setSidebar(window.innerWidth<=980 && document.body.classList.contains('sidebar-open')));
 setSidebar(false);

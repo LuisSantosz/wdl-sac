@@ -153,3 +153,15 @@ dialog::backdrop{background:#05091799;backdrop-filter:blur(3px)}.dialog-head,.di
 .deadline{font-size:11px}.deadline small{font-size:10px}.card-status{font-size:11px}.whatsapp-link{font-size:10px}
 .hero .hero-kicker::before{content:"";display:inline-block;width:6px;height:6px;border-radius:2px;background:var(--copper);margin-right:7px;vertical-align:1px}
 [data-theme=dark] .danger-solid{background:#b72743;border-color:#b72743;color:#fff}
+
+/* Navegação compacta: os nomes permanecem acessíveis por teclado/leitor de tela. */
+#sidebar-toggle{display:grid}
+@media(min-width:981px){
+ .sidebar-collapsed .app-sidebar{width:76px;padding-inline:12px}
+ .sidebar-collapsed .app-frame{margin-left:76px}
+ .sidebar-collapsed .workspace-brand{padding-inline:0;justify-content:center}
+ .sidebar-collapsed .workspace-brand>span{display:none}
+ .sidebar-collapsed .nav-section-label{font-size:0;padding:0;margin:14px 5px;border-top:1px solid #ffffff20;height:1px}
+ .sidebar-collapsed .workspace-nav button{justify-content:center;padding:11px 0;position:relative}
+ .sidebar-collapsed .workspace-nav button>span,.sidebar-collapsed .workspace-nav button>b{display:none}
+}
