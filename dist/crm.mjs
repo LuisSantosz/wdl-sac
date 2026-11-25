@@ -110,5 +110,5 @@ export function whatsappContacts(contact) {
 }
 export function whatsappUrl(record,number) {
   const code = record.crmCodigo ? ' '+record.crmCodigo : '';
-  return 'https://wa.me/'+number+'?text='+encodeURIComponent('Olá, '+record.cliente+'! Aqui é o SAC Edel White. Entramos em contato sobre a sua solicitação'+code+'.');
+  return 'https://wa.me/'+number+'?text='+encodeURIComponent('Olá, '+record.cliente+'! Aqui é o SAC Edel White. Entramos em contato sobre a sua solicitação'+code+'.\nPode me informar o que aconteceu?\n(Caso o contato não seja respondido em até 48h a solicitação será encerrada)');
 }
